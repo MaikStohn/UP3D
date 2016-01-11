@@ -81,7 +81,7 @@ void UP3DCOMM_Close()
 int UP3DCOMM_Read( const uint8_t *data, const size_t maxdatalen )
 {
   int read;
-  if( 0 != libusb_bulk_transfer( _libusb_dev_handle, (EP_IN | LIBUSB_ENDPOINT_IN), (uint8_t*)data, maxdatalen, &read, 100) )
+  if( 0 != libusb_bulk_transfer( _libusb_dev_handle, (EP_IN | LIBUSB_ENDPOINT_IN), (uint8_t*)data, maxdatalen, &read, 500) )
     return -1;
 
 #ifdef _DEBUG_IN_OUT_
@@ -98,7 +98,7 @@ int UP3DCOMM_Write( const uint8_t *data, const size_t datalen )
 #endif
 
   int written;
-  if( 0 != libusb_bulk_transfer( _libusb_dev_handle, (EP_OUT | LIBUSB_ENDPOINT_OUT), (uint8_t*)data, datalen, &written, 100) )
+  if( 0 != libusb_bulk_transfer( _libusb_dev_handle, (EP_OUT | LIBUSB_ENDPOINT_OUT), (uint8_t*)data, datalen, &written, 500) )
     return -1;
 
   return written;

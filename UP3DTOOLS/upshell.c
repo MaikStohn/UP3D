@@ -12,22 +12,6 @@
 
 #include "up3d.h"
 
-
-static char s_up3d_machine_state[][32] = {"System Error","Jogging","Running Program","Idle","Unknown Status","<UNK>"};
-
-static char s_up3d_program_state[][32] = {"Program Stop","Program Running","Program Pause","Program Have Errors","<UNK>"};
-
-static char s_up3d_system_state[][32]  = {"Unknown","System Ready","Running","Paused","Nozzle Error","Motion Error",
-                                           "Print Finished","User Canceled","Nozzle To Hot","Nozzle To Cool","Platform To Hot",
-                                           "DIP ERROR","SWEEP ERROR","SCAN ERROR","SCAN CALIB ERROR","System Power On",
-                                           "SD Card Error","SD Card Write Error","SD Card Read Error","Save To SD Card",
-                                           "JogCmd Error","Invalid Copyright","Over Usage Restriction","<UNK>"};
-
-static char s_up3d_motor_state[][32]   = {"STOP","JOG","PROG","ERRORSTOP","HOMEING","ERROR","<UNK>"};
-
-static char s_up3d_axis_name[][2]      = {"X","Y","Z","A"};
-static char s_up3d_axis_state[][32]    = {"No Error","+Limit Error","-Limit Error","<UNK>"};
-
 #define printw_b(...) {attron(A_BOLD);printw(__VA_ARGS__),attroff(A_BOLD);}
 
 static void update_state(bool redrawall)
@@ -56,17 +40,17 @@ static void update_state(bool redrawall)
   move(2,0);
   printw_b("Machine-State:");
   int32_t mstat = UP3D_GetMachineState();
-  printw(" (%1d) %-16.16s", mstat, s_up3d_machine_state[mstat] );
+  printw(" (%1d) %-16.16s", mstat, UP3D_STR_MACHINE_STATE[mstat] );
 
   move(2,(cols-40)/2);
   printw_b("Program-State:");
   int32_t pstat = UP3D_GetProgramState();
-  printw(" (%1d) %-19.19s", pstat, s_up3d_program_state[pstat] );
+  printw(" (%1d) %-19.19s", pstat, UP3D_STR_PROGRAM_STATE[pstat] );
 
   move(2,cols-42);
   printw_b("System-State:");
   int32_t sstat = UP3D_GetSystemState();
-  printw(" (%02d) %-22.22s", sstat, s_up3d_system_state[sstat] );
+  printw(" (%02d) %-22.22s", sstat, UP3D_STR_SYSTEM_STATE[sstat] );
 
   attron(A_UNDERLINE);mvhline(3,0,' ',cols);attroff(A_UNDERLINE);
 
@@ -76,7 +60,7 @@ static void update_state(bool redrawall)
     move(5+m-1,0);
     printw_b("Motor %d: State:",m );
     int32_t motstat = UP3D_GetMotorState(m);
-    printw(" (%1d) %-9.9s", motstat, s_up3d_motor_state[motstat] );
+    printw(" (%1d) %-9.9s", motstat, UP3D_STR_MOTOR_STATE[motstat] );
     printw(" | ");
     printw_b("Limit+:");
     printw(" (%08x)", UP3D_GetPositiveLimitState(m) );
@@ -85,9 +69,13 @@ static void update_state(bool redrawall)
     printw(" (%08x)", UP3D_GetNegativeLimitState(m) );
     printw(" | ");
     
-    printw_b("Axis %s State:",s_up3d_axis_name[m-1]);
+    printw_b("Axis %s State:",UP3D_STR_AXIS_NAME[m-1]);
     int32_t astat = UP3D_GetAxisState(m);
-    printw(" (%1d) %-12.12s", astat, s_up3d_axis_state[astat] );
+    printw(" (%1d) %-12.12s", astat, UP3D_STR_AXIS_STATE[astat] );
+
+    printw_b("Pos:");
+    int32_t apos = UP3D_GetAxisPosition(m);
+    printw(" %-12d (%-12.3f)", apos, (float)apos / 854.0 );
   }
 
   attron(A_UNDERLINE);mvhline(9,0,' ',cols);attroff(A_UNDERLINE);
@@ -206,6 +194,15 @@ static void update_state(bool redrawall)
   printw(" %1d ", UP3D_GetReadFromSD());
   printw_b("Write To SD Card:");
   printw(" %1d ", UP3D_GetWriteToSD());
+  printw_b("PausePRG:");
+  printw(" %1d ", UP3D_GetParameter(0x0c));
+  printw_b("StopPRG:");
+  printw(" %1d ", UP3D_GetParameter(0x0d));
+  printw_b("InitPRG:");
+  printw(" %1d ", UP3D_GetParameter(0x0e));
+
+  printw_b("ISTATE:");
+  printw(" %d ", UP3D_GetParameter(0x0f));
 
   attron(A_UNDERLINE);mvhline(27,0,' ',cols);attroff(A_UNDERLINE);
 
@@ -217,6 +214,15 @@ static void update_state(bool redrawall)
       move(r++,0);  
     printw_b("%02X:",g);printw("%08x ", UP3D_GetParameter(g));
   }
+
+/*
+  move(r++,0);  
+  for(g=0x50;g<0x54;g++)
+  {
+    uint32_t f = UP3D_GetParameter(g);
+    printw_b("%02X:",g);printw("%f ", *((float*)&f) );
+  }
+*/
 
   move(r++,0);  
   for(g=0x84;g<0x8A;g++)
@@ -231,7 +237,6 @@ static void update_state(bool redrawall)
     uint32_t f = UP3D_GetParameter(g);
     printw_b("%02X:",g);printw("%f ", *((float*)&f) );
   }
-
 
   //move(29,0);for(g=0x3d;g<0x45;g++){ printw_b("$%02X:",g);printw(" %08x ", UP3D_GetParameter(g));}
   //move(30,0);for(g=0x45;g<0x4c;g++){ printw_b("$%02X:",g);printw(" %08x ", UP3D_GetParameter(g));}
@@ -255,9 +260,9 @@ static void sigfinish(int sig)
 
 int main(int argc, char *argv[])
 {
-	if( !UP3D_Open() )
-		return -1;
-		
+  if( !UP3D_Open() )
+    return -1;
+
   signal(SIGINT, sigfinish);   // set sigint handler
   signal(SIGWINCH, sigwinch);  // set sigint handler
 
@@ -267,7 +272,7 @@ int main(int argc, char *argv[])
   nonl();                      // tell curses not to do NL->CR/NL on output
   cbreak();                    // take input chars one at a time, no wait for \n
   noecho();                    // getch no echo
-  nodelay(stdscr, TRUE);       // getch non blocking
+  nodelay(stdscr, TRUE);       // getch nonblocking
   curs_set(0);                 // no visible cursor
   
   if( has_colors() )
@@ -297,12 +302,165 @@ int main(int argc, char *argv[])
     switch( c )
     {
       case 0x12: update_state(true); break; // CTRL-R
-//      case 0x1B: sigfinish(0); break;        // ESC
+
+      case 'p':
+       UP3D_BeginWrite();UP3D_WriteBlock(&UP3D_PROG_BLK_PowerOn);UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);UP3D_Execute();
+       UP3D_SetParameter(0x94,999); //set best accuracy for reporting position
+       break;
+      case 'q':
+       UP3D_BeginWrite();UP3D_WriteBlock(&UP3D_PROG_BLK_PowerOff);UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);UP3D_Execute();
+       sigfinish(0);
+       break;
 
       case '0':
        UP3D_BeginWrite();UP3D_InsertRomProgram(0);UP3D_Execute();
        break;
 
+      case 'b':
+       UP3D_BeginWrite();
+       UP3D_WriteBlock(&UP3D_PROG_BLK_BeeperOn);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Pause100);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_BeeperOff);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Pause100);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_BeeperOn);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Pause100);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_BeeperOff);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+
+      case 'h':
+       UP3D_BeginWrite();
+       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisZFast);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisZ);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisXFast);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisX);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisYFast);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisY);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+
+
+      case '1':
+       UP3D_BeginWrite();
+       UP3D_BLK blksMoveF[2];
+       UP3D_CreateMoveF(blksMoveF,-80,0.0,-80,0.0,0,0,0,0);
+       UP3D_WriteBlocks(blksMoveF,2);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+
+      case '2':
+      {
+       UP3D_BeginWrite();
+       UP3D_BLK blksMoveL;
+       UP3D_CreateMoveL_(&blksMoveL, 100,20000,  0,  512,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+/*       
+       UP3D_CreateMoveL_(&blksMoveL, 100,9500,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 100,9000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 100,7000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 100,5000,   0, 5367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 100,3000,   0, 6367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+
+       UP3D_CreateMoveL_(&blksMoveL, 1000,3000,   0, 7000,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+
+       UP3D_CreateMoveL_(&blksMoveL, 100,3000,   0, 6367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 100,5000,   0, 5367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 100,7000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 100,9000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 100,9500,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+*/       
+/*       
+       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4366,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+*/
+//       UP3D_CreateMoveL_(&blksMoveL,  14, 4000,   0, 4045,    0,   0, -296, 0 );UP3D_WriteBlock(&blksMoveL);       
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+      }
+      case '3':
+      {
+       UP3D_BeginWrite();
+       UP3D_BLK blksMoveL;
+       UP3D_CreateMoveL_(&blksMoveL, 1000,40000,  0,  32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+      }
+      case '4':
+      {
+       UP3D_BeginWrite();
+       UP3D_BLK blksMoveL;
+       UP3D_CreateMoveL_(&blksMoveL, 1000,30000,  0,  32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+      }
+      case '5':
+      {
+       UP3D_BeginWrite();
+       UP3D_BLK blksMoveL;
+       UP3D_CreateMoveL_(&blksMoveL, 1000,20000,  0,  32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+      }
+      case '6':
+      {
+       UP3D_BeginWrite();
+       UP3D_BLK blksMoveL;
+       UP3D_CreateMoveL_(&blksMoveL, 10000,10000,  0,  32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+      }
+      case '7':
+      {
+       UP3D_BeginWrite();
+       UP3D_BLK blksMoveL;
+       UP3D_CreateMoveL_(&blksMoveL, 100,10000,  0,  32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+      }
+      case '8':
+      {
+       UP3D_BeginWrite();
+       UP3D_BLK blksMoveL;
+       UP3D_CreateMoveL_(&blksMoveL, 1000,10000,  0, 32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+      }
+      case '9':
+      {
+       UP3D_BeginWrite();
+       UP3D_BLK blksMoveL;
+//       UP3D_CreateMoveL_A(&blksMoveL, 14,10000,  0, 0.05, 0,  0, 0.5, 0 );UP3D_WriteBlock(&blksMoveL);
+       UP3D_CreateMoveL_A(&blksMoveL,499,10000,  0, 4.9, 0,  0, 0, 0 );UP3D_WriteBlock(&blksMoveL);
+//       UP3D_CreateMoveL_A(&blksMoveL, 14,10000,  0, 0.05, 0,  0, -0.5, 0 );UP3D_WriteBlock(&blksMoveL);
+
+//       UP3D_CreateMoveL_(&blksMoveL, 40,10000,  0, 64,    0,   0,  280, 0 );UP3D_WriteBlock(&blksMoveL);
+//       UP3D_CreateMoveL_(&blksMoveL, 40,10000,  0, 64,    0,   0,  -280, 0 );UP3D_WriteBlock(&blksMoveL);
+
+       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
+       UP3D_Execute();
+       break;
+      }
+
+
+      case 'a':
+       UP3D_SetParameter(0x94,99); //set smaller accuracy
+       break;
+
+/*
       case 't':
        UP3D_SetParameter(0x39,65);  //NOZZLE1 SET TEMP
        UP3D_SetParameter(0x3A,65);  //NOZZLE2 SET TEMP
@@ -323,9 +481,10 @@ int main(int argc, char *argv[])
       case 'n':
        UP3D_SetParameter(0x14,30); //NOZZLE1 ON
        break;
-      case 'b':
+      case 'm':
        UP3D_SetParameter(0x16,30); //BED ON
        break;
+*/
     }
 
     update_state(false);
@@ -336,6 +495,7 @@ int main(int argc, char *argv[])
   sigfinish(0);
   return 0;
 }
+
 
 /*ROMPROGS
 +PROG00: INITIALIZE

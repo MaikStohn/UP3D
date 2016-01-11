@@ -40,11 +40,11 @@ int main(int argc, char const *argv[])
 
   for(;;)
   {
-    uint8_t block[20];
-    if( sizeof(block) != fread( block, 1, sizeof(block), fdat ) )
+    UP3D_BLK block;
+    if( sizeof(block) != fread( &block, 1, sizeof(block), fdat ) )
       break;
 
-    if( !UP3D_WriteBlock( block, 1 ) )
+    if( !UP3D_WriteBlocks( &block, 1 ) )
       return 6;
   }
 
