@@ -170,7 +170,8 @@ typedef enum PARA {
 
   PARA_RED_BLUE_BLINK      = 0x8E, // RED/BLUE led -1=blue, 0=red, 1=purple, 2-... = blink speed
 
-//0x94 ?? 0x63 ==> 99 ... 0
+// ACCURACY FOR REPORTING AXIS POSITION 999 = best 
+//0x94 ?? 0x03e7 / 0x63 ==> 999, 99 ... 0
 
   //0xB1 FRONT BUTTON STATE  0=DEPRESSED / !0=PRESSED
 
