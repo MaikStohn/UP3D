@@ -54,7 +54,7 @@ void _get_block_machine_state(UPBLOCK *pBlock, STATE state, int32_t value)
   pBlock->pdat.longs.l2 = value;
 }
 
-void _get_block_set_parameter(UPBLOCK *pBlock, int32_t param, int32_t value)
+void _get_block_set_parameter(UPBLOCK *pBlock, PARA param, int32_t value)
 {
   memset( pBlock, 0, sizeof(UPBLOCK) );
   pBlock->pcmd = PCMD_SetParameter;
@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
 
   _get_block_machine_state(&block, STATE_MACHINE, 1); _write_block( fdat, &block );
 
-  _get_block_set_parameter(&block, 32, 1); _write_block( fdat, &block );
+  _get_block_set_parameter(&block, 0x32, 1); _write_block( fdat, &block );
 
   _get_block_home_axis(&block, AXIS_Z,  5.0, -2.0); _write_block( fdat, &block );
   _get_block_home_axis(&block, AXIS_X, 30.0,  9.0); _write_block( fdat, &block );
