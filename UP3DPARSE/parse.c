@@ -109,7 +109,6 @@ typedef enum PARA {
   
   PARA_x1E                 = 0x1E, //X: 0=X No Error,1=X+ Limit Error, 2=X- Limit Error
   PARA_x1F                 = 0x1F, //Y: 0=Y No Error,1=Y+ Limit Error, 2=Y- Limit Error
-//0x20 Get Position ==> X,Y,Z,NOZZLE ??????
   PARA_x20                 = 0x20, //Z: 0=Z No Error,1=Z+ Limit Error, 2=Z- Limit Error
   PARA_x21                 = 0x21, //A: 0=A No Error,1=A+ Limit Error, 2=A- Limit Error
 
@@ -193,6 +192,9 @@ typedef struct UPBLOCK {
 #pragma pack()
 
 static double _posX, _posY, _posZ, _posE;
+static double _speedX = 0;
+static double _speedY = 0;
+static double _speedE = 0;
 
 void _dat_cmd_MoveF( float speed1, float pos1, float speed2, float pos2, bool isXY )
 {
@@ -209,6 +211,9 @@ void _dat_cmd_MoveF( float speed1, float pos1, float speed2, float pos2, bool is
       printf( " Y:%.4f(%.4f)", pos2, speed2 );
       _posY = pos2;
     }
+    
+    _speedX = 0;
+    _speedY = 0;
   }
   else
   {
@@ -223,30 +228,75 @@ void _dat_cmd_MoveF( float speed1, float pos1, float speed2, float pos2, bool is
       _posE = pos2;
     }
     printf( "\n" );
+    
+    _speedE = 0;
   }
 }
 
 void _dat_cmd_MoveL( int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6, int16_t p7, int16_t p8 )
 {
-  int32_t v10 = (int32_t)0xFFFFFFF / (int32_t)p1;
+/*
+  int32_t v10 = (int32_t)0xFFFFFFF / (int32_t)p1;  //compensate rounding errors
+
   int32_t v13 = (int32_t)p1*((int32_t)p1 - 1);
 
-  double r1 = ((( ((int32_t)p3 + v10) * (int32_t)p1 ) + ((v13*(int32_t)p6)/2) - 511 - (int32_t)p1*v10)/512.0)/STEPS_X;
-  double r2 = ((( ((int32_t)p4 + v10) * (int32_t)p1 ) + ((v13*(int32_t)p7)/2) - 511 - (int32_t)p1*v10)/512.0)/STEPS_Y;
-  double r3 = ((( ((int32_t)p5 + v10) * (int32_t)p1 ) + ((v13*(int32_t)p8)/2) - 511 - (int32_t)p1*v10)/512.0)/STEPS_E;
+  //s = (t^2 * a) / 2        (s travaled during acceleration / decelleration)
+  //  = (p1^2 * p6) / 2
+  //  = ((v13 * p6) / 2) ---------------------------------vvvvvvvvvvvvvvvvvvvvv   vvv----vvvvvvvvvvvvvv---- compensate rounding errors
 
-//#if 0
+  double r1 = (  (( ((int32_t)p3 + v10) * (int32_t)p1 ) + ((v13*(int32_t)p6)/2) - 511 - (int32_t)p1*v10)   /512.0)/STEPS_X;
+  double r2 = (  (( ((int32_t)p4 + v10) * (int32_t)p1 ) + ((v13*(int32_t)p7)/2) - 511 - (int32_t)p1*v10)   /512.0)/STEPS_Y;
+  double r3 = (  (( ((int32_t)p5 + v10) * (int32_t)p1 ) + ((v13*(int32_t)p8)/2) - 511 - (int32_t)p1*v10)   /512.0)/STEPS_E;
+
+
+  //s = p3 * p1 ----^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  //s = v * t        (s travaled during linear speed)
+
+  //512 = divider/factor to compress/expand to/from fixed point
+
   double r4 = p6/512.0;
   double r5 = p7/512.0;
   double r6 = p8/512.0;
+#if 0
   printf( "Move-L: %d,%d,%d,%d,%d,%d,%d,%d : %d  X:%.3f Y:%.3f E:%.3f  %f\t%f\t%f\n", p1,p2,p3,p4,p5,p6,p7,p8,p2,r1,r2,r3,r4,r5,r6 );
-//#endif
+#endif
 
   _posX += r1;
   _posY += r2;
   _posE += r3;
- 
-  printf( "Move-L: X:%.3f Y:%.3f E:%.3f F:%d\n", _posX, _posY, _posE, p2 );
+  
+  _speedX += r4*p1;
+  _speedY += r5*p1;
+  _speedE += r6*p1;
+
+*/
+
+
+
+//==> ??? P2 ???
+
+  int32_t t  = p1;
+  int32_t vX = p3;
+  int32_t vY = p4;
+  int32_t vE = p5;
+  int32_t aX = p6;
+  int32_t aY = p7;
+  int32_t aE = p8;
+
+  double sX = ( ( (aX*t*(t-1))/2 + vX*t - 511) / 512.0 ) /STEPS_X;
+  double sY = ( ( (aY*t*(t-1))/2 + vY*t - 511) / 512.0 ) /STEPS_Y;
+  double sE = ( ( (aE*t*(t-1))/2 + vE*t - 511) / 512.0 ) /STEPS_E;
+
+  _posX += sX;
+  _posY += sY;
+  _posE += sE;
+  
+  _speedX = vX / 512.0;
+  _speedY = vY / 512.0;
+  _speedE = vE / 512.0;
+
+  
+  printf( "Move-L: X:%.4f(%.4f) Y:%.4f(%.4f) E:%.4f(%.4f) ?:%d\n", _posX, _speedX, _posY, _speedY, _posE, _speedE, p2 );
 }
 
 
