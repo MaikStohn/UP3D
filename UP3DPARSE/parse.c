@@ -271,32 +271,35 @@ void _dat_cmd_MoveL( int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5,
 
 */
 
-
+//#if 0
+  printf( "Move-L: %d,%d,%d,%d,%d,%d,%d,%d\n", p1,p2,p3,p4,p5,p6,p7,p8 );
+//#endif
 
 //==> ??? P2 ???
 
   int32_t t  = p1;
   int32_t vX = p3;
   int32_t vY = p4;
-  int32_t vE = p5;
+  int32_t vA = p5;
   int32_t aX = p6;
   int32_t aY = p7;
-  int32_t aE = p8;
+  int32_t aA = p8;
 
   double sX = ( ( (aX*t*(t-1))/2 + vX*t - 511) / 512.0 ) /STEPS_X;
   double sY = ( ( (aY*t*(t-1))/2 + vY*t - 511) / 512.0 ) /STEPS_Y;
-  double sE = ( ( (aE*t*(t-1))/2 + vE*t - 511) / 512.0 ) /STEPS_E;
+  double sA = ( ( (aA*t*(t-1))/2 + vA*t - 511) / 512.0 ) /STEPS_E;
+
+  printf( "------: DX:%.8f DY:%.8f DE:%.8f\n", sX, sY, sA );
 
   _posX += sX;
   _posY += sY;
-  _posE += sE;
+  _posE += sA;
   
-  _speedX = vX / 512.0;
-  _speedY = vY / 512.0;
-  _speedE = vE / 512.0;
+  _speedX = (vX + aX * t)/512.0;
+  _speedY = (vY + aY * t)/512.0;
+  _speedE = (vA + aA * t)/512.0;
 
-  
-  printf( "Move-L: X:%.4f(%.4f) Y:%.4f(%.4f) E:%.4f(%.4f) ?:%d\n", _posX, _speedX, _posY, _speedY, _posE, _speedE, p2 );
+  printf( "------: X:%.4f(%.4f) Y:%.4f(%.4f) E:%.4f(%.4f) ?:%d\n", _posX, _speedX, _posY, _speedY, _posE, _speedE, p2 );
 }
 
 
