@@ -159,6 +159,8 @@ typedef enum PARA {
 //0x46 ?? 13 
 //0x49 ?? 80
 
+//0x4B ?? (default: 0x1312D00 = 20000000 / 50000000) ? timer base for stepper calculation MHZ of CPU in printer ?
+
   PARA_REPORT_PERCENT      = 0x4C,
   PARA_REPORT_TIME_REMAIN  = 0x4D,
 
