@@ -15,6 +15,23 @@
 
 //???
 
+/*
+U 0x2E GetCurMaterial ==> (usageinfo/cartridgeserial)
+U 0x43 ClearProgramBuf
+U 0x49 ('0'+port) GetInPort
+U 0x4C ('0'+prg) LoadRomProg  (8=extrude nozzle 1, 9=extrude nozzle 2)
+U 0x4A ('0'+AXIS,FLOAT,FLOAT) MotorJogTo
+U 0x6A ('0'+AXIS,FLOAT,FLOAT) MotorJog
+U 0x53 StopProgram
+U 0x56 (1) ReadCMDFromSD
+U 0x58 Start/ResumeProgram
+U 0x70 ('0'+AXIS) GetMotorPos ==> (int32 steps)
+
+U 0x6C (x,y) UseSDProgramBuf
+
+*/
+
+
 //CMD 20 ==> ...
 
 //?CMD 4A MOVE  00 = X 01 = Y (FLOAT,FLOAT)

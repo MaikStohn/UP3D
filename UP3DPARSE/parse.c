@@ -163,6 +163,9 @@ typedef enum PARA {
 
   PARA_REPORT_PERCENT      = 0x4C,
   PARA_REPORT_TIME_REMAIN  = 0x4D,
+  
+//0x54: UP: "SupportNozzleUpDown" (0x03E8B258 / 0x0000B258)
+
 
 //0x82 ?? FF
 //0x83 ?? FF
@@ -171,6 +174,7 @@ typedef enum PARA {
 
   PARA_RED_BLUE_BLINK      = 0x8E, // RED/BLUE led -1=blue, 0=red, 1=purple, 2-... = blink speed
 
+//0x94: UP:"SetZPrecision" (0/999)
 // ACCURACY FOR REPORTING AXIS POSITION 999 = best 
 //0x94 ?? 0x03e7 / 0x63 ==> 999, 99 ... 0
 
