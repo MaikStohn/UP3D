@@ -1,0 +1,61 @@
+CMD 4:
+
+================================================================================
+
+P1(uint16) P2(uint16) P3(int16) P4(int16) P5(int16) P6(int16) P7(int16) P8(int16)
+
+P1 = timer count
+
+P2 = timer period (e.g. 50MHz CPU / P2(25000) ==> 2000 Hz)
+
+P3 = X steps per timer event ( /512 )
+P4 = Y steps per timer event ( /512 )
+P5 = A steps per timer event ( /512 )
+
+P6 = X steps acceleration per timer event ( /512 )
+P7 = Y steps acceleration per timer event ( /512 )
+P8 = A steps acceleration per timer event ( /512 )
+
+================================================================================
+
+
+Formulas:
+
+physics: s = v*t + a/2*t^2 
+
+--> P3*P1 + P6/2*P1*P1
+--> s = ( P3*P1 + P6/2*P1*P1 )/512 = steps
+    s = ( P3*P1 + P6/2*P1*P1 )/512/854 = mm
+
+
+known values from config: accel_a = accel_d
+known values for a segment: s, v_entry, v_run, v_exit
+
+--> split in 3 blocks (accelerate, run, decelerate)
+
+accelerate:
+==> v_entry + accel_a*t_a = v_run
+  --> a_a = accel_a
+  --> t_a = (v_run - v_entry)/a_a
+  --> v_a = v_run - a_a*t_a (correction of v_blk_entry, or use v_entry here)
+ (--> s_a = v_entry*t_a + a_a/2*t_a^2 )
+
+decelerate:
+==> v_exit = v_run - accel_d*t_d
+  --> a_d = -accel_d
+  --> t_d = (v_exit - v_run)/a_d
+  --> v_d = v_run + a_d*t_d  (correction of v_blk_entry, or use v_run here)
+ (--> s_d = v_run*t_d + a_d/2*t_d^2 )
+
+run:
+==> s = s_a + s_d + v_run*t_r
+  --> a_r = 0
+  --> t_r = s - s_a - s_d
+  --> v_r = v_run
+
+
+==> CMD4 params
+t_a, ..., v_a, ..., a_a, ...
+t_r, ..., v_r, ..., a_r, ...
+t_d, ..., v_d, ..., a_d, ...
+
