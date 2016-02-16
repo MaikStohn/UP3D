@@ -50,7 +50,7 @@ decelerate:
 run:
 ==> s = s_a + s_d + v_run*t_r
   --> a_r = 0
-  --> t_r = s - s_a - s_d
+  --> t_r = (s - s_a - s_d)/v_run
   --> v_r = v_run
 
 
