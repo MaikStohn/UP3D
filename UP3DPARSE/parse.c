@@ -8,12 +8,8 @@
 #define STEPS_Y (854.0)
 #define STEPS_E (40.0)
 
-#define ADD_X   (0.0)
-#define ADD_Y   (120.0)
-#define ADD_Z   (122.25)
-
 typedef enum PCMD {
-//PCMD0 User Pause?
+//PCMD0 ?
   PCMD_Stop         = 0x00000001,
   PCMD_SetState     = 0x00000002,
   PCMD_MoveF        = 0x00000003,
@@ -293,9 +289,7 @@ void _dat_cmd_MoveL( int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5,
 
   double sX = ( ( (aX*t*(t-1))/2 + vX*t - 511) / 512.0 ) /STEPS_X;
   double sY = ( ( (aY*t*(t-1))/2 + vY*t - 511) / 512.0 ) /STEPS_Y;
-  double sA = ( ( (aA*t*(t-1))/2 + vA*t - 511) / 512.0 ) /STEPS_E;
-
-  printf( "------: DX:%.8f DY:%.8f DE:%.8f\n", sX, sY, sA );
+  double sA = (( ( (aA*t*(t-1))/2 + vA*t - 511) / 512.0 ) /STEPS_E)/100;
 
   _posX += sX;
   _posY += sY;
