@@ -304,163 +304,212 @@ int main(int argc, char *argv[])
       case 0x12: update_state(true); break; // CTRL-R
 
       case 'p':
-       UP3D_BeginWrite();UP3D_WriteBlock(&UP3D_PROG_BLK_PowerOn);UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);UP3D_Execute();
-       UP3D_SetParameter(0x94,999); //set best accuracy for reporting position
+       {
+         UP3D_BLK blk;
+         UP3D_BeginWrite();
+         UP3D_PROG_BLK_Power(&blk,true);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+         UP3D_SetParameter(0x94,999); //set best accuracy for reporting position
+       }
        break;
       case 'q':
-       UP3D_BeginWrite();UP3D_WriteBlock(&UP3D_PROG_BLK_PowerOff);UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);UP3D_Execute();
-       sigfinish(0);
+       {
+         UP3D_BLK blk;
+         UP3D_BeginWrite();
+         UP3D_PROG_BLK_Power(&blk,false);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+         sigfinish(0);
+       }
        break;
 
       case '0':
-       UP3D_BeginWrite();UP3D_InsertRomProgram(0);UP3D_Execute();
+       {
+         UP3D_BeginWrite();
+         UP3D_InsertRomProgram(0);
+         UP3D_Execute();
+       }
        break;
 
       case 'b':
-       UP3D_BeginWrite();
-       UP3D_WriteBlock(&UP3D_PROG_BLK_BeeperOn);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Pause100);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_BeeperOff);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Pause100);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_BeeperOn);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Pause100);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_BeeperOff);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+       {
+         UP3D_BLK blk;
+         UP3D_BeginWrite();
+         UP3D_PROG_BLK_Beeper(&blk,true);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_Pause(&blk,100);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_Beeper(&blk,false);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_Pause(&blk,100);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_Beeper(&blk,true);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_Pause(&blk,100);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_Beeper(&blk,false);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+       }
        break;
 
       case 'h':
-       UP3D_BeginWrite();
-       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisZFast);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisZ);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisXFast);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisX);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisYFast);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_HomeAxisY);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+       {
+         UP3D_BLK blk;
+         UP3D_BLK blksHome[2];
+         UP3D_BeginWrite();
+         UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_Z ); UP3D_WriteBlocks(blksHome,2);
+         UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_Y ); UP3D_WriteBlocks(blksHome,2);
+         UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_X ); UP3D_WriteBlocks(blksHome,2);
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+       }
        break;
 
-
       case '1':
-       UP3D_BeginWrite();
-       UP3D_BLK blksMoveF[2];
-       UP3D_CreateMoveF(blksMoveF,-80,0.0,-80,0.0,0,0,0,0);
-       UP3D_WriteBlocks(blksMoveF,2);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+       {
+         UP3D_BLK blk;
+         UP3D_BLK blksMoveF[2];
+         UP3D_BeginWrite();
+         UP3D_PROG_BLK_MoveF( blksMoveF,-150,-60.0,-150,60.0,0,0,0,0);
+         UP3D_WriteBlocks(blksMoveF,2);
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+       }
        break;
 
       case '2':
-      {
-       UP3D_BeginWrite();
-       UP3D_BLK blksMoveL;
-       UP3D_CreateMoveL_(&blksMoveL, 100,20000,  0,  512,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-/*       
-       UP3D_CreateMoveL_(&blksMoveL, 100,9500,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 100,9000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 100,7000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 100,5000,   0, 5367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 100,3000,   0, 6367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-
-       UP3D_CreateMoveL_(&blksMoveL, 1000,3000,   0, 7000,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-
-       UP3D_CreateMoveL_(&blksMoveL, 100,3000,   0, 6367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 100,5000,   0, 5367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 100,7000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 100,9000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 100,9500,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-*/       
-/*       
-       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4366,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_(&blksMoveL, 499,4000,   0, 4367,    0 ,  0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-*/
-//       UP3D_CreateMoveL_(&blksMoveL,  14, 4000,   0, 4045,    0,   0, -296, 0 );UP3D_WriteBlock(&blksMoveL);       
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+       {
+         UP3D_BLK blk;
+         UP3D_BeginWrite();
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+       }
        break;
-      }
+
       case '3':
-      {
-       UP3D_BeginWrite();
-       UP3D_BLK blksMoveL;
-       UP3D_CreateMoveL_(&blksMoveL, 1000,40000,  0,  32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+       {
+         UP3D_BLK blk;
+         UP3D_BeginWrite();
+UP3D_PROG_BLK_MoveL(&blk,21,23809,-7,0,0,-495,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,1581,24984,-10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,21,23809,-10403,0,0,495,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,1,100,512,0,0,0,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,21,23809,7,0,0,495,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,1581,24984,10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,1,100,512,0,0,0,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,21,23809,10403,0,0,-495,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,1,100,512,0,0,0,0,0);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+       }
        break;
-      }
+
       case '4':
-      {
-       UP3D_BeginWrite();
-       UP3D_BLK blksMoveL;
-       UP3D_CreateMoveL_(&blksMoveL, 1000,30000,  0,  32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+       {
+         UP3D_BLK blk;
+         UP3D_BeginWrite();
+/*        
+UP3D_PROG_BLK_MoveL(&blk,21,23809,-7,0,0,-495,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,1581,24984,-10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
+//UP3D_PROG_BLK_MoveL(&blk,21,23809,-10403,0,0,495,0,0);UP3D_WriteBlock(&blk);
+//UP3D_PROG_BLK_MoveL(&blk,1,100,512,0,0,0,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,21,23809,-10403+24,0,0,495,0,0);UP3D_WriteBlock(&blk);
+*/
+UP3D_PROG_BLK_MoveL(&blk,21,23809,5,0,0,-495,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,1581,24984,-10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,21,23809,-10391,0,0,495,0,0);UP3D_WriteBlock(&blk);
+
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+       }
        break;
-      }
+
       case '5':
-      {
-       UP3D_BeginWrite();
-       UP3D_BLK blksMoveL;
-       UP3D_CreateMoveL_(&blksMoveL, 1000,20000,  0,  32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+       {
+         UP3D_BLK blk;
+         UP3D_BeginWrite();
+/*
+UP3D_PROG_BLK_MoveL(&blk,21,23809,7,0,0,495,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,1581,24984,10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
+//UP3D_PROG_BLK_MoveL(&blk,1,100,512,0,0,0,0,0);UP3D_WriteBlock(&blk);
+//UP3D_PROG_BLK_MoveL(&blk,21,23809,10403,0,0,-495,0,0);UP3D_WriteBlock(&blk);
+//UP3D_PROG_BLK_MoveL(&blk,1,100,512,0,0,0,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,21,23809,10403+48,0,0,-495,0,0);UP3D_WriteBlock(&blk);
+*/
+UP3D_PROG_BLK_MoveL(&blk,21,23809,19,0,0,495,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,1581,24984,10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
+UP3D_PROG_BLK_MoveL(&blk,21,23809,10440,0,0,-495,0,0);UP3D_WriteBlock(&blk);
+
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+       }
        break;
-      }
+
       case '6':
-      {
-       UP3D_BeginWrite();
-       UP3D_BLK blksMoveL;
-       UP3D_CreateMoveL_(&blksMoveL, 10000,10000,  0,  32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+       {
+         UP3D_BLK blk;
+         UP3D_BeginWrite();
+
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+       }
        break;
-      }
+
       case '7':
-      {
-       UP3D_BeginWrite();
-       UP3D_BLK blksMoveL;
-       UP3D_CreateMoveL_(&blksMoveL, 100,10000,  0,  32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+       {
+         UP3D_BLK blk;
+         UP3D_BeginWrite();
+
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_Execute();
+       }
        break;
-      }
+
       case '8':
-      {
-       UP3D_BeginWrite();
-       UP3D_BLK blksMoveL;
-       UP3D_CreateMoveL_(&blksMoveL, 1000,10000,  0, 32000,    0,   0,  0, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+       {
+         UP3D_BLK blk;
+/*
+         UP3D_BeginWrite();
+
+  UP3D_SetProgramID( 3, true );
+  
+  UP3D_BLK blksHome[2];
+  UP3D_BeginWrite();
+  UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_Z ); UP3D_WriteBlocks(blksHome,2);
+  UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_Y ); UP3D_WriteBlocks(blksHome,2);
+  UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_X ); UP3D_WriteBlocks(blksHome,2);
+
+  UP3D_BLK blks[2];
+  UP3D_PROG_BLK_MoveF( blks,-1000,0,-1000,0,-1000,-100,-1000,0);
+  UP3D_WriteBlocks(blks,2);
+  
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+*/
+  UP3D_BeginWrite();
+  UP3D_SetProgramID( 3, false );
+         UP3D_Execute();
+       }
        break;
-      }
+
       case '9':
-      {
-       UP3D_BeginWrite();
-       UP3D_BLK blksMoveL;
-//       UP3D_CreateMoveL_A(&blksMoveL, 14,10000,  0, 0.05, 0,  0, 0.5, 0 );UP3D_WriteBlock(&blksMoveL);
-       UP3D_CreateMoveL_A(&blksMoveL,499,10000,  0, 4.9, 0,  0, 0, 0 );UP3D_WriteBlock(&blksMoveL);
-//       UP3D_CreateMoveL_A(&blksMoveL, 14,10000,  0, 0.05, 0,  0, -0.5, 0 );UP3D_WriteBlock(&blksMoveL);
+       {
+         UP3D_BLK blk;
+         UP3D_BeginWrite();
+         UP3D_SetProgramID( 9, true );
 
-//       UP3D_CreateMoveL_(&blksMoveL, 40,10000,  0, 64,    0,   0,  280, 0 );UP3D_WriteBlock(&blksMoveL);
-//       UP3D_CreateMoveL_(&blksMoveL, 40,10000,  0, 64,    0,   0,  -280, 0 );UP3D_WriteBlock(&blksMoveL);
+         UP3D_PROG_BLK_SetParameter(&blk,PARA_BED_TEMP,100);UP3D_WriteBlock(&blk);
+         UP3D_PROG_BLK_SetParameter(&blk,PARA_HEATER_BED_ON,1);UP3D_WriteBlock(&blk);
 
-       UP3D_WriteBlock(&UP3D_PROG_BLK_Stop);
-       UP3D_Execute();
+         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+
+         UP3D_BeginWrite();
+         UP3D_SetProgramID( 9, false );
+         UP3D_Execute();
+       }
        break;
-      }
 
 
       case 'a':
        UP3D_SetParameter(0x94,99); //set smaller accuracy
        break;
 
-/*
+
       case 't':
        UP3D_SetParameter(0x39,65);  //NOZZLE1 SET TEMP
        UP3D_SetParameter(0x3A,65);  //NOZZLE2 SET TEMP
@@ -469,7 +518,7 @@ int main(int argc, char *argv[])
        break;
 
       case 's':
-       UP3D_SetParameter(0x10,1);
+       UP3D_SetParameter(0x10,2);
        break;
 
       case 'x':
@@ -479,12 +528,12 @@ int main(int argc, char *argv[])
        break;
  
       case 'n':
-       UP3D_SetParameter(0x14,30); //NOZZLE1 ON
+       UP3D_SetParameter(0x14,1); //NOZZLE1 ON
        break;
       case 'm':
-       UP3D_SetParameter(0x16,30); //BED ON
+       UP3D_SetParameter(0x16,1); //BED ON
        break;
-*/
+
     }
 
     update_state(false);
