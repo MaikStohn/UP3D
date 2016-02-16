@@ -23,7 +23,7 @@ U 0x4C ('0'+prg) LoadRomProg  (8=extrude nozzle 1, 9=extrude nozzle 2)
 U 0x4A ('0'+AXIS,FLOAT,FLOAT) MotorJogTo
 U 0x6A ('0'+AXIS,FLOAT,FLOAT) MotorJog
 U 0x53 StopProgram
-U 0x56 (1) ReadCMDFromSD
+U SetSystemVar(0x38,1) ReadCMDFromSD
 U 0x58 Start/ResumeProgram
 U 0x70 ('0'+AXIS) GetMotorPos ==> (int32 steps)
 
@@ -450,70 +450,4 @@ int32_t UP3D_GetWriteToSD()
   return UP3D_GetParameter(0x37);
 }
 
-///////////////////////
-void UP3D_CreateMoveF( UP3D_BLK upblks[2], float speedX, float posX, float speedY, float posY, float speedZ, float posZ, float speedA, float posA )
-{
-  upblks[0].pcmd    = UP3DPCMD_MoveF;
-  upblks[0].pdat1.f = speedX;
-  upblks[0].pdat2.f = posX;
-  upblks[0].pdat3.f = speedY;
-  upblks[0].pdat4.f = posY;
-  
-  upblks[1].pcmd    = UP3DPCMD_MoveF;
-  upblks[1].pdat1.f = speedZ;
-  upblks[1].pdat2.f = posZ;
-  upblks[1].pdat3.f = speedA;
-  upblks[1].pdat4.f = posA;
-}
-
-void UP3D_CreateMoveL_( UP3D_BLK *pupblk, short p1,  short p2,  short p3,  short p4,  short p5,  short p6,  short p7,  short p8)
-{
-  pupblk->pcmd       = UP3DPCMD_MoveL;
-  pupblk->pdat1.s.s1 = p1;
-  pupblk->pdat1.s.s2 = p2;
-  pupblk->pdat2.s.s1 = p3;
-  pupblk->pdat2.s.s2 = p4;
-  pupblk->pdat3.s.s1 = p5;
-  pupblk->pdat3.s.s2 = p6;
-  pupblk->pdat4.s.s1 = p7;
-  pupblk->pdat4.s.s2 = p8;
-}
-
-void UP3D_CreateMoveL_A( UP3D_BLK *pupblk, int32_t p1,  short p2,  float XA, float YA, float AA, float XB, float YB, float AB)
-{
-  int32_t v10 = 0x0FFFFFFF / p1;
-  int32_t v13 = p1*(p1-1);
-  
-  int16_t pX2 = XB*512;
-  int16_t pX1  = (
-                  ( 
-                   (p1*v10 + 845*XA*512) + 511 - ((v13*pX2)/2) 
-                  ) / p1
-                 ) -v10;
-
-  int16_t pY2 = YB*512;
-  int16_t pY1  = (
-                  ( 
-                   (p1*v10 + 845*YA*512) + 511 - ((v13*pY2)/2) 
-                  ) / p1
-                 ) -v10;
-
-  int16_t pA2 = AB*512;
-  int16_t pA1  = (
-                  ( 
-                   (p1*v10 + 40*AA*512) + 511 - ((v13*pA2)/2)
-                  ) / p1
-                 ) -v10;
-
-
-  pupblk->pcmd       = UP3DPCMD_MoveL;
-  pupblk->pdat1.s.s1 = p1;
-  pupblk->pdat1.s.s2 = p2;
-  pupblk->pdat2.s.s1 = pX1;
-  pupblk->pdat2.s.s2 = pY1;
-  pupblk->pdat3.s.s1 = pA1;
-  pupblk->pdat3.s.s2 = pX2;
-  pupblk->pdat4.s.s1 = pY2;
-  pupblk->pdat4.s.s2 = pA2;
-}
 
