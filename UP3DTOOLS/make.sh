@@ -6,7 +6,7 @@ gcc -O3 -Wall \
     -I /usr/local/Cellar/libusb/1.0.19/include/libusb-1.0 \
     -lobjc \
     /usr/local/Cellar/libusb/1.0.19/lib/libusb-1.0.a  \
-    -o upload up3dcomm.c up3d.c upload.c
+    -o upload up3dcomm.c up3d.c up3ddata.c upload.c
 
 strip upload
 
@@ -17,7 +17,7 @@ gcc -O3 -Wall \
     -lobjc \
     -lncurses \
     /usr/local/Cellar/libusb/1.0.19/lib/libusb-1.0.a  \
-    -o upshell up3dcomm.c up3d.c upshell.c
+    -o upshell up3dcomm.c up3d.c up3ddata.c upshell.c
 
 strip upshell
 
