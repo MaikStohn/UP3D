@@ -31,12 +31,21 @@ int main(int argc, char const *argv[])
     UP3D_Close();
     return 3;
   }
+  
+  UP3D_SetParameter(PARA_RED_BLUE_BLINK,50);
 
+/*
+  UP3D_BLK blk;
+  UP3D_BeginWrite();
+  UP3D_PROG_BLK_Power(&blk,true);UP3D_WriteBlock(&blk);
+  UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+  UP3D_Execute();
+*/
   if( !UP3D_BeginWrite() )
     return 4;
 
-//  if( !UP3D_SetProgramID( 9, true ) )
-//    return 5;
+  if( !UP3D_SetProgramID( 7, true ) )
+    return 5;
 
   for(;;)
   {
@@ -46,15 +55,16 @@ int main(int argc, char const *argv[])
 
     if( !UP3D_WriteBlocks( &block, 1 ) )
       return 6;
+
+printf("Free: %d   \r", UP3D_GetFreeBlocks() );
   }
 
   fclose( fdat );
 
-//  UP3D_GetFreeBlocks(); //??
-//  if( !UP3D_BeginWrite() )
-//    return 7;
-//  if( !UP3D_SetProgramID( 9, false ) )
-//    return 8;
+  if( !UP3D_BeginWrite() )
+    return 7;
+  if( !UP3D_SetProgramID( 7, false ) )
+    return 8;
 
   if( !UP3D_Execute() )
     return 9;
