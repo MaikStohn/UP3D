@@ -6,7 +6,7 @@
 
 #define STEPS_X (854.0)
 #define STEPS_Y (854.0)
-#define STEPS_E (40.0)
+#define STEPS_E (854.0)
 
 typedef enum PCMD {
 //PCMD0 ?
@@ -289,7 +289,7 @@ void _dat_cmd_MoveL( int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5,
 
   double sX = ( ( (aX*t*(t-1))/2 + vX*t - 511) / 512.0 ) /STEPS_X;
   double sY = ( ( (aY*t*(t-1))/2 + vY*t - 511) / 512.0 ) /STEPS_Y;
-  double sA = (( ( (aA*t*(t-1))/2 + vA*t - 511) / 512.0 ) /STEPS_E)/100;
+  double sA = ( ( (aA*t*(t-1))/2 + vA*t - 511) / 512.0 ) /STEPS_E;
 
   _posX += sX;
   _posY += sY;
