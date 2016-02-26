@@ -306,36 +306,36 @@ int main(int argc, char *argv[])
       case 'p':
        {
          UP3D_BLK blk;
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
          UP3D_PROG_BLK_Power(&blk,true);UP3D_WriteBlock(&blk);
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
          UP3D_SetParameter(0x94,999); //set best accuracy for reporting position
        }
        break;
       case 'q':
        {
          UP3D_BLK blk;
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
          UP3D_PROG_BLK_Power(&blk,false);UP3D_WriteBlock(&blk);
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
          sigfinish(0);
        }
        break;
 
       case '0':
        {
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
          UP3D_InsertRomProgram(0);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
        }
        break;
 
       case 'b':
        {
          UP3D_BLK blk;
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
          UP3D_PROG_BLK_Beeper(&blk,true);UP3D_WriteBlock(&blk);
          UP3D_PROG_BLK_Pause(&blk,100);UP3D_WriteBlock(&blk);
          UP3D_PROG_BLK_Beeper(&blk,false);UP3D_WriteBlock(&blk);
@@ -344,7 +344,7 @@ int main(int argc, char *argv[])
          UP3D_PROG_BLK_Pause(&blk,100);UP3D_WriteBlock(&blk);
          UP3D_PROG_BLK_Beeper(&blk,false);UP3D_WriteBlock(&blk);
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
        }
        break;
 
@@ -352,12 +352,12 @@ int main(int argc, char *argv[])
        {
          UP3D_BLK blk;
          UP3D_BLK blksHome[2];
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
          UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_Z ); UP3D_WriteBlocks(blksHome,2);
          UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_Y ); UP3D_WriteBlocks(blksHome,2);
          UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_X ); UP3D_WriteBlocks(blksHome,2);
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
        }
        break;
 
@@ -365,27 +365,27 @@ int main(int argc, char *argv[])
        {
          UP3D_BLK blk;
          UP3D_BLK blksMoveF[2];
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
          UP3D_PROG_BLK_MoveF( blksMoveF,-150,-60.0,-150,60.0,0,0,0,0);
          UP3D_WriteBlocks(blksMoveF,2);
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
        }
        break;
 
       case '2':
        {
          UP3D_BLK blk;
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
        }
        break;
 
       case '3':
        {
          UP3D_BLK blk;
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
 UP3D_PROG_BLK_MoveL(&blk,21,23809,-7,0,0,-495,0,0);UP3D_WriteBlock(&blk);
 UP3D_PROG_BLK_MoveL(&blk,1581,24984,-10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
 UP3D_PROG_BLK_MoveL(&blk,21,23809,-10403,0,0,495,0,0);UP3D_WriteBlock(&blk);
@@ -396,14 +396,14 @@ UP3D_PROG_BLK_MoveL(&blk,1,100,512,0,0,0,0,0);UP3D_WriteBlock(&blk);
 UP3D_PROG_BLK_MoveL(&blk,21,23809,10403,0,0,-495,0,0);UP3D_WriteBlock(&blk);
 UP3D_PROG_BLK_MoveL(&blk,1,100,512,0,0,0,0,0);UP3D_WriteBlock(&blk);
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
        }
        break;
 
       case '4':
        {
          UP3D_BLK blk;
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
 /*        
 UP3D_PROG_BLK_MoveL(&blk,21,23809,-7,0,0,-495,0,0);UP3D_WriteBlock(&blk);
 UP3D_PROG_BLK_MoveL(&blk,1581,24984,-10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
@@ -416,14 +416,14 @@ UP3D_PROG_BLK_MoveL(&blk,1581,24984,-10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
 UP3D_PROG_BLK_MoveL(&blk,21,23809,-10391,0,0,495,0,0);UP3D_WriteBlock(&blk);
 
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
        }
        break;
 
       case '5':
        {
          UP3D_BLK blk;
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
 /*
 UP3D_PROG_BLK_MoveL(&blk,21,23809,7,0,0,495,0,0);UP3D_WriteBlock(&blk);
 UP3D_PROG_BLK_MoveL(&blk,1581,24984,10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
@@ -437,40 +437,40 @@ UP3D_PROG_BLK_MoveL(&blk,1581,24984,10924,0,0,0,0,0);UP3D_WriteBlock(&blk);
 UP3D_PROG_BLK_MoveL(&blk,21,23809,10440,0,0,-495,0,0);UP3D_WriteBlock(&blk);
 
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
        }
        break;
 
       case '6':
        {
          UP3D_BLK blk;
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
 
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
        }
        break;
 
       case '7':
        {
          UP3D_BLK blk;
-         UP3D_BeginWrite();
+         UP3D_ClearProgramBuf();
 
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_Execute();
+         UP3D_StartResumeProgram();
        }
        break;
 
       case '8':
        {
-         UP3D_BLK blk;
 /*
-         UP3D_BeginWrite();
+         UP3D_BLK blk;
+         UP3D_ClearProgramBuf();
 
-  UP3D_SetProgramID( 3, true );
+  UP3D_UseSDProgramBuf( 3, true );
   
   UP3D_BLK blksHome[2];
-  UP3D_BeginWrite();
+  UP3D_ClearProgramBuf();
   UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_Z ); UP3D_WriteBlocks(blksHome,2);
   UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_Y ); UP3D_WriteBlocks(blksHome,2);
   UP3D_PROG_BLK_Home( blksHome, UP3DAXIS_X ); UP3D_WriteBlocks(blksHome,2);
@@ -481,26 +481,36 @@ UP3D_PROG_BLK_MoveL(&blk,21,23809,10440,0,0,-495,0,0);UP3D_WriteBlock(&blk);
   
          UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
 */
-  UP3D_BeginWrite();
-  UP3D_SetProgramID( 3, false );
-         UP3D_Execute();
+
+         UP3D_ClearProgramBuf();
+         UP3D_UseSDProgramBuf( 3, false );
+         UP3D_StartResumeProgram();
        }
        break;
 
       case '9':
        {
          UP3D_BLK blk;
-         UP3D_BeginWrite();
-         UP3D_SetProgramID( 9, true );
+         UP3D_SetPrintJobInfo( 9, 0, 0 );
+         UP3D_ClearProgramBuf();
+         UP3D_UseSDProgramBuf( 9, true );
 
+         UP3D_PROG_BLK_Power(&blk,true);UP3D_WriteBlock(&blk);
          UP3D_PROG_BLK_SetParameter(&blk,PARA_BED_TEMP,100);UP3D_WriteBlock(&blk);
          UP3D_PROG_BLK_SetParameter(&blk,PARA_HEATER_BED_ON,1);UP3D_WriteBlock(&blk);
 
-         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
+         UP3D_BLK sblk[3];
+         UP3D_PROG_BLK_Stop(&sblk[0]);
+         UP3D_PROG_BLK_Stop(&sblk[1]);
+         UP3D_PROG_BLK_Stop(&sblk[2]);
+         UP3D_WriteBlocks(sblk,3);
+         UP3D_WriteBlocks(sblk,3);
 
-         UP3D_BeginWrite();
-         UP3D_SetProgramID( 9, false );
-         UP3D_Execute();
+         UP3D_SetPrintJobInfo( 9, 1, 0 );
+
+         UP3D_UseSDProgramBuf( 9, false );
+         UP3D_ClearProgramBuf();
+//         UP3D_StartResumeProgram();
        }
        break;
 
