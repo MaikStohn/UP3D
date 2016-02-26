@@ -29,6 +29,7 @@ U 0x70 ('0'+AXIS) GetMotorPos ==> (int32 steps)
 
 U 0x6C (x,y) UseSDProgramBuf
 
+ //63 was used in older versions
 */
 
 
@@ -74,12 +75,12 @@ bool UP3D_IsPrinterResponsive()
   return true;
 }
 
-bool UP3D_BeginWrite()
+bool UP3D_ClearProgramBuf()
 {
-  static const uint8_t UP3D_CMD_63[] = { 0x63 };
+  static const uint8_t UP3D_CMD_43[] = { 0x43 };
   uint8_t resp[2048];  
 
-  if( (UP3DCOMM_Write( UP3D_CMD_63, sizeof(UP3D_CMD_63) ) != sizeof(UP3D_CMD_63)) ||
+  if( (UP3DCOMM_Write( UP3D_CMD_43, sizeof(UP3D_CMD_43) ) != sizeof(UP3D_CMD_43)) ||
       (1 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
       (6 != resp[0]) )
     return false;
@@ -87,7 +88,7 @@ bool UP3D_BeginWrite()
   return true;
 }
 
-bool UP3D_SetProgramID( uint8_t progID, bool enableWrite )
+bool UP3D_UseSDProgramBuf( uint8_t progID, bool enableWrite )
 {
   if( progID>9 )
     return false;
@@ -96,6 +97,22 @@ bool UP3D_SetProgramID( uint8_t progID, bool enableWrite )
   uint8_t resp[2048];  
 
   if( (UP3DCOMM_Write( UP3D_CMD_6C_X_Y, sizeof(UP3D_CMD_6C_X_Y) ) != sizeof(UP3D_CMD_6C_X_Y)) ||
+      (1 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
+      (6 != resp[0]) )
+    return false;
+
+  return true;
+}
+
+bool UP3D_SetPrintJobInfo( uint8_t progID, uint8_t x, uint32_t y )
+{
+  if( progID>9 )
+    return false;
+    
+  uint8_t UP3D_CMD_63_X_Y[7] = { 0x63, progID, x, (y>>0)&0xFF, (y>>8)&0xFF, (y>>16)&0xFF, (y>>24)&0xFF };
+  uint8_t resp[2048];  
+
+  if( (UP3DCOMM_Write( UP3D_CMD_63_X_Y, sizeof(UP3D_CMD_63_X_Y) ) != sizeof(UP3D_CMD_63_X_Y)) ||
       (1 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
       (6 != resp[0]) )
     return false;
@@ -136,43 +153,31 @@ uint32_t UP3D_GetFreeBlocks()
 bool UP3D_WriteBlocks( const UP3D_BLK *data, uint8_t blocks )
 {
   uint8_t send[2048];
-  uint32_t out = 0;
   for( ;blocks>0; )
   {
     uint8_t b = blocks;
-    if( b>3 ) b = 3;
-    for( ;out+2+20*b>2048; b--)
-      ;
-    if( b<3 )
+    if( b>72 ) b = 72; //??? needed ???
+
+    uint32_t fblocks= UP3D_GetFreeBlocks();
+    if( b>fblocks ) b = fblocks;
+
+//    for( ;out+2+20*b>2048; b--) //??? needed ???
+//      ;
+
+    if( b>0 )
     {
-      uint8_t UP3D_CMD_2F_X[] = { 0x2F, blocks };
-      memcpy( &send[out], UP3D_CMD_2F_X, 2 );
-      memcpy( &send[out+2], data, 20*blocks );
+      uint8_t UP3D_CMD_2F_X[] = { 0x2F, b };
+      memcpy( &send[0], UP3D_CMD_2F_X, 2 );
+      memcpy( &send[2], data, 20*b );
       data++;
-      out+=2+20*blocks;
+      if( UP3DCOMM_Write( send, 2+20*b ) != 2+20*b )
+        return false;
+
+      blocks -= b;
+      data += b;
     }
     else
-    {
-      static const uint8_t UP3D_CMD_00_00[] = { 0x00, 0x00 };
-      static const uint8_t UP3D_CMD_2F_03[] = { 0x2F, 0x03 };
-      memcpy( &send[out], UP3D_CMD_2F_03, 2 );
-      memcpy( &send[out+2], data, 20*3 );
-      data +=3;
-      out+=2+20*3;
-      if( ((blocks-b)>0) && (out<=2048-22) )
-      {
-        memcpy( &send[out+2+20*3], UP3D_CMD_00_00, 2 );
-        out+=2;
-      }
-    }
-    blocks -= b;
-
-    if( !blocks || (out>2048-22) )
-    {
-      if( UP3DCOMM_Write( send, out ) != out )
-        return false;
-      out = 0;
-    }
+      usleep( 100000 );
   }
 
   return true;
@@ -183,7 +188,7 @@ bool UP3D_WriteBlock( const UP3D_BLK *data )
   return UP3D_WriteBlocks(data,1);
 }
 
-bool UP3D_Execute()
+bool UP3D_StartResumeProgram()
 {
   static const uint8_t UP3D_CMD_58[] = { 0x58 };
   uint8_t resp[2048];  

@@ -18,13 +18,14 @@ bool     UP3D_IsPrinterResponsive();
 uint32_t UP3D_GetParameter(uint8_t param);
 bool     UP3D_SetParameter(uint8_t param, uint32_t value);
 
-bool     UP3D_BeginWrite();
-bool     UP3D_SetProgramID( uint8_t progID, bool enableWrite );
+bool     UP3D_ClearProgramBuf();
+bool     UP3D_UseSDProgramBuf( uint8_t progID, bool enableWrite );
+bool     UP3D_SetPrintJobInfo( uint8_t progID, uint8_t x, uint32_t y );
 bool     UP3D_InsertRomProgram( uint8_t prog );
 uint32_t UP3D_GetFreeBlocks();
 bool     UP3D_WriteBlocks( const UP3D_BLK *data, uint8_t blocks );
 bool     UP3D_WriteBlock( const UP3D_BLK *data );
-bool     UP3D_Execute();
+bool     UP3D_StartResumeProgram();
 
 int32_t  UP3D_GetMachineState();
 int32_t  UP3D_GetProgramState();
