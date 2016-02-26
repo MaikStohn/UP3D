@@ -1,6 +1,20 @@
-//////////////////
-//Author: M.Stohn/
-//////////////////
+/*
+  up3ddata.cpp for UP3DTranscoder
+  M. Stohn 2016
+  
+  This is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  Grbl is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 #include "up3ddata.h"
 
@@ -63,7 +77,6 @@ void UP3D_PROG_BLK_Home( UP3D_BLK pupblks[2], UP3D_AXIS axis )
       break;
   }
 }
-
 void UP3D_PROG_BLK_MoveF( UP3D_BLK pupblks[2], float speedX, float posX, float speedY, float posY, float speedZ, float posZ, float speedA, float posA )
 {
   memset( pupblks, 0, sizeof(UP3D_BLK)*2 );
