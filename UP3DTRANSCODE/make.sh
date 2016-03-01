@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # note: for windows get MSYS2, install gcc for mingw using pacman and compile using the mingw shell
 
