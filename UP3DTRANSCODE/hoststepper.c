@@ -34,7 +34,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <math.h>
-#include <cstdlib>
+#include <stdlib.h>
 
 //DEBUG
 #include <stdio.h>

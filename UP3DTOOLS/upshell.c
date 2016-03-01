@@ -3,7 +3,11 @@
 //////////////////
 
 #include <stdlib.h>
+#ifdef _WIN32
+#include <ncurses/curses.h>
+#else
 #include <curses.h>
+#endif
 #include <signal.h>
 #include <string.h>
 
@@ -18,7 +22,7 @@ static void update_state(bool redrawall)
 {
   int rows, cols;
   getmaxyx(stdscr,rows,cols);
-  
+
   if( redrawall )
   {
     clear();
@@ -264,7 +268,9 @@ int main(int argc, char *argv[])
     return -1;
 
   signal(SIGINT, sigfinish);   // set sigint handler
+#ifdef SIGWINCH
   signal(SIGWINCH, sigwinch);  // set sigint handler
+#endif
 
   initscr();                   // initialize the curses library
   raw();                       // line buffering disabled

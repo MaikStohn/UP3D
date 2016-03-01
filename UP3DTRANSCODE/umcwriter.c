@@ -216,7 +216,7 @@ void umcwriter_move_direct(double X, double Y, double Z, double A, double F)
   double tX = fabs(X+pos[X_AXIS])/feedX;
   double tY = fabs(Y-pos[Y_AXIS])/feedY;
   double tZ = fabs(umcwriter_Z_height-Z-umcwriter_Z)/feedZ;
-  double tA = fabs(relA)/feedA;
+  //double tA = fabs(relA)/feedA;
 
   double t=0;
   if(tX>t) t=tX; if(tY>t) t=tY; if(tZ>t) t=tZ;

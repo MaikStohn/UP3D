@@ -1,7 +1,7 @@
 /*
   UP3D G-Code transcoder
   M. Stohn 2016
-  
+
   This is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 int main(int argc, char *argv[])
 {
   if( argc != 3 )
@@ -40,14 +41,13 @@ int main(int argc, char *argv[])
   if( !fgcode )
     return -1;
 
-  size_t len = 0;
-  char* line = NULL;
+  char line[1024];
 
   //gcode parsing pass 1 (determine print time)
   umcwriter_init( NULL, 0, 0 );
 
   gcp_reset();
-  while( getline( &line, &len, fgcode ) > 0 )
+  while( fgets(line,sizeof(line),fgcode) )
     gcp_process_line(line);
 
   umcwriter_finish();
@@ -59,14 +59,12 @@ int main(int argc, char *argv[])
     return -2;
 
   gcp_reset();
-  while( getline( &line, &len, fgcode ) > 0 )
+  while( fgets(line,sizeof(line),fgcode) )
     gcp_process_line(line);
 
   umcwriter_finish();
 
   fclose( fgcode );
-  if( line )
-    free( line );
 
   printf("Height: %5.2fmm / Layer: %3d / Time: ", gcp_get_height(), gcp_get_layer() );
   int h = print_time/3600; if(h){printf("%dh:",h); print_time -= h*3600;}

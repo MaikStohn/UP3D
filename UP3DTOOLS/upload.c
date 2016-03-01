@@ -9,8 +9,9 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <sys/time.h>
-    
+
 #include "up3d.h"
+#include "compat.h"
 
 #define upl_error(s) { printf("ERROR: %s\n",s); }
 
