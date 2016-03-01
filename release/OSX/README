@@ -1,0 +1,14 @@
+
+up3dtranscode: 
+./up3dtranscode input.gcode output.umc
+
+---
+
+upload:
+./upload output.umc
+
+---
+
+upshell:
+./upshell
+

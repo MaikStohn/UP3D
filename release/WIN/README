@@ -1,0 +1,16 @@
+Install original UP Software (for driver)
+Start->Run->CMD
+
+up3dtranscode: 
+up3dtranscode.exe input.gcode output.umc
+
+---
+
+upload:
+upload.exe output.umc
+
+---
+
+upshell:
+upshell.exe
+
