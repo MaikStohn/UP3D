@@ -31,9 +31,15 @@
 
 int main(int argc, char *argv[])
 {
-  if( argc != 3 )
+  double nozzle_height = 123.45; //set default nozzle height
+
+  if (argc == 4)
+	if (sscanf(argv[3],"%lf", &nozzle_height) != 1)
+		argc = 1; // failed to decode nozzle height
+
+  if( argc < 3 || argc > 4)
   {
-    printf("Usage: %s input.gcode output.umc\n\n", argv[0]);
+    printf("Usage: %s input.gcode output.umc [nozzle height]\n\n", argv[0]);
     return 0;
   }
 
@@ -55,7 +61,7 @@ int main(int argc, char *argv[])
 
   //gcode parsing pass 2 (write output)
   rewind( fgcode );
-  if( !umcwriter_init( argv[2], 123.45, print_time ) )
+  if( !umcwriter_init( argv[2], nozzle_height, print_time ) )
     return -2;
 
   gcp_reset();
@@ -70,6 +76,7 @@ int main(int argc, char *argv[])
   int h = print_time/3600; if(h){printf("%dh:",h); print_time -= h*3600;}
   int m = print_time/60; printf("%02dm:",m); print_time -= m*60;
   printf("%02ds\n",print_time);
-
+  printf("Nozzle Height: %5.2fmm\n", nozzle_height);
+  
   return 0; 
 }
