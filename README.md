@@ -1,6 +1,8 @@
 # UP3D
 UP 3D Printer Tools
 
+Little How To: http://stohn.de/3d/index.php/2016/03/10/up3dtools-little-how-to
+
 ## up3dtranscode: 
 
 G-Code to UpMachineCode (UMC) converter
