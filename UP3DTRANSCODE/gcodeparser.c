@@ -144,8 +144,8 @@ bool gcp_process_line(const char* gcodeline)
        {
         if(fb) gcp_F=fv;
         if(eb) gcp_E=(gcp_use_absoulte||gcp_use_extruder_absoulte)?ev:gcp_E+ev;
-        if(xb) gcp_X=(gcp_use_absoulte)?xv:gcp_X+xv;
-        if(yb) gcp_Y=(gcp_use_absoulte)?yv:gcp_Y+yv;
+        if(xb) gcp_Y=(gcp_use_absoulte)?xv:gcp_Y+xv; // swap x/y
+        if(yb) gcp_X=(gcp_use_absoulte)?yv:gcp_X+yv; // swap x/y
         if(zb) gcp_Z=(gcp_use_absoulte)?zv:gcp_Z+zv;
         if(zb)
         {
@@ -201,8 +201,8 @@ bool gcp_process_line(const char* gcodeline)
 
       case 92: //set position
        {
-         if(xb) gcp_X=xv;
-         if(yb) gcp_Y=yv;
+         if(xb) gcp_Y=xv;
+         if(yb) gcp_X=yv;
          if(zb) gcp_Z=zv;
          if(eb) gcp_E=ev;
          umcwriter_planner_set_position(gcp_X,gcp_Y,gcp_E);
