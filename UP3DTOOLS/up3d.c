@@ -63,7 +63,7 @@ void UP3D_Close()
   UP3DCOMM_Close();
 }
 
-bool UP3D_IsPrinterResponsive()
+unsigned int UP3D_IsPrinterResponsive()
 {
   static const uint8_t UP3D_CMD_1[] = { 0x01, 0x00 }; //GetFwVersion ?
   uint8_t resp[2048];  
@@ -71,8 +71,9 @@ bool UP3D_IsPrinterResponsive()
       (5 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
       (6 != resp[4]) )
     return false;
-    
-  return true;
+  unsigned int version = (unsigned int)resp[1]<<8 | resp[0];
+  printf("Up Printer Version: V%d.%02d\n", version / 100, version % 100); 
+  return version;
 }
 
 bool UP3D_ClearProgramBuf()
