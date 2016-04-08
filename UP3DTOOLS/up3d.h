@@ -18,6 +18,9 @@ bool     UP3D_IsPrinterResponsive();
 uint32_t UP3D_GetParameter(uint8_t param);
 bool     UP3D_SetParameter(uint8_t param, uint32_t value);
 
+bool     UP3D_GetSystemVar(uint8_t param, int32_t *var);
+bool     UP3D_GetPrinterStatus(TT_tagPrinterStatus *status);
+
 bool     UP3D_ClearProgramBuf();
 bool     UP3D_UseSDProgramBuf( uint8_t progID, bool enableWrite );
 bool     UP3D_SetPrintJobInfo( uint8_t progID, uint8_t x, uint32_t y );

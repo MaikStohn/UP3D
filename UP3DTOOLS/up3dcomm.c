@@ -10,7 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <libusb-1.0/libusb.h>
+#include <libusb.h>
 
 //#define _DEBUG_IN_OUT_
 
@@ -83,10 +83,10 @@ void UP3DCOMM_Close()
   _libusb_ctx = NULL;
 }
 
-int UP3DCOMM_Read( const uint8_t *data, const size_t maxdatalen )
+int UP3DCOMM_ReadTO( const uint8_t *data, const size_t maxdatalen, const int timeout )
 {
   int read;
-  if( 0 != libusb_bulk_transfer( _libusb_dev_handle, (EP_IN | LIBUSB_ENDPOINT_IN), (uint8_t*)data, maxdatalen, &read, 500) )
+  if( 0 != libusb_bulk_transfer( _libusb_dev_handle, (EP_IN | LIBUSB_ENDPOINT_IN), (uint8_t*)data, maxdatalen, &read, timeout) )
     return -1;
 
 #ifdef _DEBUG_IN_OUT_
@@ -94,6 +94,11 @@ int UP3DCOMM_Read( const uint8_t *data, const size_t maxdatalen )
 #endif
 
   return read;
+}
+
+int UP3DCOMM_Read( const uint8_t *data, const size_t maxdatalen )
+{
+  return UP3DCOMM_ReadTO( data, maxdatalen, 500 );
 }
 
 int UP3DCOMM_Write( const uint8_t *data, const size_t datalen )

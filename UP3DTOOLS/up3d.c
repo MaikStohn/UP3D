@@ -11,47 +11,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <math.h>
 
+#include "compat.h"
 
-//???
-
-/*
-U 0x2E GetCurMaterial ==> (usageinfo/cartridgeserial)
-U 0x43 ClearProgramBuf
-U 0x49 ('0'+port) GetInPort
-U 0x4C ('0'+prg) LoadRomProg  (8=extrude nozzle 1, 9=extrude nozzle 2)
-U 0x4A ('0'+AXIS,FLOAT,FLOAT) MotorJogTo
-U 0x6A ('0'+AXIS,FLOAT,FLOAT) MotorJog
-U 0x53 StopProgram
-U SetSystemVar(0x38,1) ReadCMDFromSD
-U 0x58 Start/ResumeProgram
-U 0x70 ('0'+AXIS) GetMotorPos ==> (int32 steps)
-
-U 0x6C (x,y) UseSDProgramBuf
-
- //63 was used in older versions
-*/
-
-
-//CMD 20 ==> ...
-
-//?CMD 4A MOVE  00 = X 01 = Y (FLOAT,FLOAT)
-//CMD 6A MOVE  00 = X, 01 = Y, 02 = Z (FLOAT,FLOAT)
-//CMD 53 = STOP?
-
-//CMD 70 ('0'+AXIS) ==> INT32 = STEPS
-//CMD 73 ('0'+AXIS,FLOAT,?)
-
-//CMD 22 WRITE SD
-//CMD 23 READ SD (int8_t index, int8_t len(<60)) : 23 0A 10 ==> GetNozzelHeightSD ==> 123456.0 | height
-
-//CMD 2B SEND RANDOM (8byte)
-
-//CMD 52 GET PRINTER PARAMS ==> long answer
-
-//CMD 77 ERASE 01 = ROMPROG 02 = CONFIG
-//CMD 75 SENDBLK 01 = 1ST BLOCK 02 = FOLLOW BLOCKS
-//CMD 55 COMMIT 00 = ? 01 = ? 02 = OUTPORTBLK 03 = INPORTBLK 04 = ? 05 = SETBLK 06 = IDBLK
+static uint32_t _up3d_connected_fw_version;
 
 bool UP3D_Open()
 {
@@ -66,19 +30,21 @@ void UP3D_Close()
 bool UP3D_IsPrinterResponsive()
 {
   static const uint8_t UP3D_CMD_1[] = { 0x01, 0x00 }; //GetFwVersion ?
-  uint8_t resp[2048];  
+  uint8_t resp[2048];
   if( (UP3DCOMM_Write( UP3D_CMD_1, sizeof(UP3D_CMD_1) ) != sizeof(UP3D_CMD_1)) ||
       (5 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
       (6 != resp[4]) )
     return false;
-    
+
+  _up3d_connected_fw_version = le32toh(*((uint32_t*)resp));
+
   return true;
 }
 
 bool UP3D_ClearProgramBuf()
 {
   static const uint8_t UP3D_CMD_43[] = { 0x43 };
-  uint8_t resp[2048];  
+  uint8_t resp[2048];
 
   if( (UP3DCOMM_Write( UP3D_CMD_43, sizeof(UP3D_CMD_43) ) != sizeof(UP3D_CMD_43)) ||
       (1 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
@@ -92,9 +58,9 @@ bool UP3D_UseSDProgramBuf( uint8_t progID, bool enableWrite )
 {
   if( progID>9 )
     return false;
-    
+
   uint8_t UP3D_CMD_6C_X_Y[3] = { 0x6C, progID, enableWrite?0x01:0x00 };
-  uint8_t resp[2048];  
+  uint8_t resp[2048];
 
   if( (UP3DCOMM_Write( UP3D_CMD_6C_X_Y, sizeof(UP3D_CMD_6C_X_Y) ) != sizeof(UP3D_CMD_6C_X_Y)) ||
       (1 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
@@ -108,9 +74,9 @@ bool UP3D_SetPrintJobInfo( uint8_t progID, uint8_t x, uint32_t y )
 {
   if( progID>9 )
     return false;
-    
+
   uint8_t UP3D_CMD_63_X_Y[7] = { 0x63, progID, x, (y>>0)&0xFF, (y>>8)&0xFF, (y>>16)&0xFF, (y>>24)&0xFF };
-  uint8_t resp[2048];  
+  uint8_t resp[2048];
 
   if( (UP3DCOMM_Write( UP3D_CMD_63_X_Y, sizeof(UP3D_CMD_63_X_Y) ) != sizeof(UP3D_CMD_63_X_Y)) ||
       (1 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
@@ -123,7 +89,7 @@ bool UP3D_SetPrintJobInfo( uint8_t progID, uint8_t x, uint32_t y )
 bool UP3D_InsertRomProgram( uint8_t prog )
 {
   uint8_t UP3D_CMD_4C_X[] = { 0x4C, '0'+prog };
-  uint8_t resp[2048];  
+  uint8_t resp[2048];
 
   if( (UP3DCOMM_Write( UP3D_CMD_4C_X, sizeof(UP3D_CMD_4C_X) ) != sizeof(UP3D_CMD_4C_X)) ||
       (5 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
@@ -131,7 +97,7 @@ bool UP3D_InsertRomProgram( uint8_t prog )
       (1 != resp[0])
     )
     return false;
-    
+
   return true;
 }
 
@@ -145,9 +111,7 @@ uint32_t UP3D_GetFreeBlocks()
       (6 != resp[4]) )
     return 0;
 
-  uint32_t r;
-  memcpy( &r, resp, sizeof(r) );
-  return r;
+  return le32toh( *((uint32_t*)resp) );
 }
 
 bool UP3D_WriteBlocks( const UP3D_BLK *data, uint8_t blocks )
@@ -156,13 +120,13 @@ bool UP3D_WriteBlocks( const UP3D_BLK *data, uint8_t blocks )
   for( ;blocks>0; )
   {
     uint8_t b = blocks;
-    if( b>72 ) b = 72; //??? needed ???
+
+    if( _up3d_connected_fw_version<330 ) b = 3; //older firmware versions support max 64 bytes (3 blocks) per write only
+
+    if( b>72 ) b = 72;                          //limit to max. 2048 bytes per logical packet
 
     uint32_t fblocks= UP3D_GetFreeBlocks();
     if( b>fblocks ) b = fblocks;
-
-//    for( ;out+2+20*b>2048; b--) //??? needed ???
-//      ;
 
     if( b>0 )
     {
@@ -191,7 +155,7 @@ bool UP3D_WriteBlock( const UP3D_BLK *data )
 bool UP3D_StartResumeProgram()
 {
   static const uint8_t UP3D_CMD_58[] = { 0x58 };
-  uint8_t resp[2048];  
+  uint8_t resp[2048];
 
   if( (UP3DCOMM_Write( UP3D_CMD_58, sizeof(UP3D_CMD_58) ) != sizeof(UP3D_CMD_58)) ||
       (0 == UP3DCOMM_Read( resp, sizeof(resp) )) /*||
@@ -210,7 +174,7 @@ bool UP3D_SetParameter(uint8_t param, uint32_t value)
       (1 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
       (6 != resp[0]) )
     return false;
-    
+
   return true;
 }
 
@@ -224,9 +188,21 @@ uint32_t UP3D_GetParameter(uint8_t param)
       (6 != resp[4]) )
     return 0;
 
-  uint32_t r;
-  memcpy( &r, resp, sizeof(r) );
-  return r;
+  return le32toh( *((uint32_t*)resp) );
+}
+
+bool UP3D_GetSystemVar(uint8_t param, int32_t *var)
+{
+  uint8_t UP3D_CMD_76_X[] = { 0x76, param };
+  uint8_t resp[2048];
+
+  if( (UP3DCOMM_Write( UP3D_CMD_76_X, sizeof(UP3D_CMD_76_X) ) != sizeof(UP3D_CMD_76_X)) ||
+      (5 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
+      (6 != resp[4]) )
+    return false;
+
+  *var = le32toh( *((uint32_t*)resp) );
+  return true;
 }
 
 int32_t UP3D_GetAxisPosition(int axis)
@@ -241,9 +217,7 @@ int32_t UP3D_GetAxisPosition(int axis)
       (6 != resp[4]) )
     return 0;
 
-  int32_t i;
-  memcpy( &i, resp, sizeof(i) );
-  return i;
+  return le32toh( *((uint32_t*)resp) );
 }
 
 bool UP3D_SendRandom()
@@ -255,7 +229,7 @@ bool UP3D_SendRandom()
       (1 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
       (6 != resp[0]) )
     return false;
-    
+
   return true;
 }
 
@@ -455,4 +429,80 @@ int32_t UP3D_GetWriteToSD()
   return UP3D_GetParameter(0x37);
 }
 
+bool UP3D_GetPrinterStatus(TT_tagPrinterStatus *status)
+{
+  int32_t sysvar, sysvar2 = 0;
+  if( UP3D_GetSystemVar( 0, &sysvar) )     //PARA_SYSTEM_STATUS
+    status->SystemStatus = (uint8_t)sysvar;
 
+  if( !UP3D_GetSystemVar( 0x10, &sysvar) ) //PARA_PRINT_STATUS
+    return false;
+  status->PrintStatus = (uint8_t)sysvar;
+
+  if( UP3D_GetSystemVar( 0x0A, &sysvar) )  //PARA_REPORT_LAYER
+    status->ReportLayer = htole16((uint16_t)sysvar);
+
+  if( UP3D_GetSystemVar( 0x0B, &sysvar) )  //PARA_REPORT_HEIGHT
+    status->ReportHeight = htole16((int16_t)floor( (*((float*)&sysvar))*10.0 ) );
+
+  if( UP3D_GetSystemVar( 0x4D, &sysvar) && UP3D_GetSystemVar( 0x4C, &sysvar2) )  //PARA_REPORT_TIME_REMAIN PARA_REPORT_PERCENT 
+    status->ReportTimeAndPercent = htole32(sysvar2 + (sysvar<<8));
+
+  if( UP3D_GetSystemVar( 6, &sysvar) )     //NOZZLE1 TEMP
+    status->Nozzle1Temp = htole16((int16_t)floor( (*((float*)&sysvar))*50.0 ));
+  if( UP3D_GetSystemVar( 7, &sysvar) )     //NOZZLE2 TEMP
+    status->Nozzle2Temp = htole16((int16_t)floor( (*((float*)&sysvar))*50.0 ));
+  if( UP3D_GetSystemVar( 8, &sysvar) )     //BED TEMP
+    status->BedTemp = htole16((int16_t)floor( (*((float*)&sysvar))*50.0 ));
+  if( UP3D_GetSystemVar( 9, &sysvar) )     //ROOM TEMP
+    status->RoomTemp = htole16((int16_t)floor( (*((float*)&sysvar))*50.0 ));
+
+  status->HeaterStatus = 0;
+  if( UP3D_GetSystemVar( 0x14, &sysvar) )     //HEATER NOZZLE1 STATUS
+    status->HeaterStatus |= sysvar?1:0;
+  if( UP3D_GetSystemVar( 0x15, &sysvar) )     //HEATER NOZZLE2 STATUS
+    status->HeaterStatus |= sysvar?2:0;
+  if( UP3D_GetSystemVar( 0x16, &sysvar) )     //HEATER BED STATUS
+    status->HeaterStatus |= sysvar?4:0;
+
+  UP3D_SetParameter( 0x94, 999 );             //SET_Z_PRECISION
+
+  uint32_t v;
+  for( v=0; v<4; v++ )
+  {
+    status->AxisStatus[v] = 0;
+
+    if( UP3D_GetSystemVar( v+2, &sysvar) )    //MOTOR STATUS
+      status->AxisStatus[v] |= sysvar & 7;
+
+    if( UP3D_GetSystemVar( v+0x18, &sysvar) ) //HF?
+      status->AxisStatus[v] |= sysvar?8:0;
+
+    if( UP3D_GetSystemVar( v+0x26, &sysvar) ) //NL?
+      status->AxisStatus[v] |= sysvar?16:0;
+
+    if( UP3D_GetSystemVar( v+0x22, &sysvar) ) //ENDSTOP
+      status->AxisStatus[v] |= sysvar?32:0;
+
+    if( UP3D_GetSystemVar( v+0x1E, &sysvar) ) //ERROR
+      status->AxisStatus[v] |= sysvar<<6;
+
+    sysvar = UP3D_GetAxisPosition(v);
+    float f = ((float)sysvar) / 854.0;        //FIXED VALUE FOR NOW
+      status->AxisPosition[v] = htole32( *((uint32_t*)&f) );
+  }
+
+  UP3D_SetParameter( 0x94, 0 );             //SET_Z_PRECISION
+
+  if( UP3D_GetSystemVar( 0x5E, &sysvar) )     //?
+    status->Para_x5E = htole32(sysvar);
+  if( UP3D_GetSystemVar( 0x5F, &sysvar) )     //?
+    status->Para_x5F = htole32(sysvar);
+  if( UP3D_GetSystemVar( 0x56, &sysvar) )     //?
+    status->Para_x56 = htole32(sysvar);
+  if( UP3D_GetSystemVar( 0x57, &sysvar) )     //?
+    status->Para_x57 = htole32(sysvar);
+
+  status->UnkMinusOne = htole64((int64_t)-1);
+  return true;
+}
