@@ -1,0 +1,18 @@
+y#!/bin/sh
+
+STARTD="/usr/bin/up3dwifisrv"
+STOPD="/usr/bin/killall up3dwifisrv"
+
+UP_PRODID="4745/"
+PRODUCT_HOT=`echo $PRODUCT | cut -c 1-5`
+
+if [ "${PRODUCT_HOT}${INTERFACE}" = "${UP_PRODID}" ]; then
+        if [ "${ACTION}" = "add" ]; then
+                logger -s -t hotplug -p daemon.info "up3d add"
+                ${STARTD}
+        fi
+        if [ "${ACTION}" = "remove" ]; then
+                logger -s -t hotplug -p daemon.info "up3d remove"
+                ${STOPD}
+        fi
+fi
