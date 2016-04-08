@@ -1,7 +1,7 @@
 /*
   up3ddata.cpp for UP3DTranscoder
   M. Stohn 2016
-  
+
   This is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -25,13 +25,13 @@
 void UP3D_PROG_BLK_Stop( UP3D_BLK *pupblk )
 {
   memset( pupblk, 0, sizeof(UP3D_BLK) );
-  pupblk->pcmd=UP3DPCMD_Stop;
+  pupblk->pcmd=UP3DPCMD_Stop; 
 }
 
 void UP3D_PROG_BLK_Power( UP3D_BLK *pupblk, bool on )
 {
   memset( pupblk, 0, sizeof(UP3D_BLK) );
-  pupblk->pcmd=UP3DPCMD_SetState;
+  pupblk->pcmd=UP3DPCMD_SetState; 
   pupblk->pdat1.l=UP3DPCMD_SetState_StatePower;
   pupblk->pdat2.l=on?UP3DPCMD_SetState_ValueOn:UP3DPCMD_SetState_ValueOff;
 }
@@ -39,7 +39,7 @@ void UP3D_PROG_BLK_Power( UP3D_BLK *pupblk, bool on )
 void UP3D_PROG_BLK_Beeper( UP3D_BLK *pupblk, bool on )
 {
   memset( pupblk, 0, sizeof(UP3D_BLK) );
-  pupblk->pcmd=UP3DPCMD_SetState;
+  pupblk->pcmd=UP3DPCMD_SetState; 
   pupblk->pdat1.l=UP3DPCMD_SetState_StateBeeper;
   pupblk->pdat2.l=on?UP3DPCMD_SetState_ValueOn:UP3DPCMD_SetState_ValueOff;
 }
@@ -54,7 +54,7 @@ void UP3D_PROG_BLK_Pause( UP3D_BLK *pupblk, uint32_t msec )
 void UP3D_PROG_BLK_SetParameter( UP3D_BLK *pupblk, uint8_t parameter, int32_t value )
 {
   memset( pupblk, 0, sizeof(UP3D_BLK) );
-  pupblk->pcmd=UP3DPCMD_SetParameter;
+  pupblk->pcmd=UP3DPCMD_SetParameter; 
   pupblk->pdat1.l=parameter;
   pupblk->pdat2.l=value;
 }
@@ -77,7 +77,6 @@ void UP3D_PROG_BLK_Home( UP3D_BLK pupblks[2], UP3D_AXIS axis )
       break;
   }
 }
-
 void UP3D_PROG_BLK_MoveF( UP3D_BLK pupblks[2], float speedX, float posX, float speedY, float posY, float speedZ, float posZ, float speedA, float posA )
 {
   memset( pupblks, 0, sizeof(UP3D_BLK)*2 );
@@ -89,8 +88,8 @@ void UP3D_PROG_BLK_MoveL( UP3D_BLK *pupblk, short p1, short p2, short p3, short 
 {
   memset( pupblk, 0, sizeof(UP3D_BLK) );
   pupblk->pcmd=UP3DPCMD_MoveL; 
-  pupblk->pdat1.s.s1=p1; pupblk->pdat1.s.s2=p2;
-  pupblk->pdat2.s.s1=p3; pupblk->pdat2.s.s2=p4; pupblk->pdat3.s.s1=p5;
+  pupblk->pdat1.s.s1=p1; pupblk->pdat1.s.s2=p2; 
+  pupblk->pdat2.s.s1=p3; pupblk->pdat2.s.s2=p4; pupblk->pdat3.s.s1=p5; 
   pupblk->pdat3.s.s2=p6; pupblk->pdat4.s.s1=p7; pupblk->pdat4.s.s2=p8;
 }
 
@@ -102,3 +101,4 @@ void UP3D_PROG_BLK_WaitIfNot( UP3D_BLK *pupblk, uint8_t parameter, int32_t value
   pupblk->pdat2.l=value;
   pupblk->pdat3.l=compchar;
 }
+

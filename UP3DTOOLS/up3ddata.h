@@ -1,7 +1,7 @@
 /*
   up3ddata.h for UP3DTranscoder
   M. Stohn 2016
-  
+
   This is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -78,7 +78,7 @@ typedef enum UP3D_PRINTSTATUS {
   UP3DPRINTSTATUS_PAUSED = 3,
 } UP3D_PRINTSTATUS;
 
-#pragma pack(1)  
+#pragma pack(1)
 typedef struct UP3D_BLK {
   UP3D_PROG_CMD pcmd;
   union UPBLOCKDAT1 {
@@ -102,6 +102,26 @@ typedef struct UP3D_BLK {
     int32_t l;
   } pdat4;
 } UP3D_BLK;
+
+typedef struct TT_tagPrinterStatus {
+  uint8_t  SystemStatus;
+  uint8_t  PrintStatus;
+  uint16_t ReportLayer;
+  int16_t  ReportHeight;
+  uint32_t ReportTimeAndPercent;
+  int16_t  Nozzle1Temp;
+  int16_t  Nozzle2Temp;
+  int16_t  BedTemp;
+  int16_t  RoomTemp;
+  uint8_t  HeaterStatus;
+  uint8_t  AxisStatus[4];
+  float    AxisPosition[4];
+  uint32_t Para_x5E;
+  uint32_t Para_x5F;
+  uint32_t Para_x56;
+  uint32_t Para_x57;
+  int64_t  UnkMinusOne;
+} TT_tagPrinterStatus;
 #pragma pack()
 
 typedef enum PARA {
