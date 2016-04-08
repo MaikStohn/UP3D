@@ -23,9 +23,9 @@ elif [[ "$OSTYPE" == "darwin"* ]]; then
 gcc -O3 -Wall \
     -framework IOKit \
     -framework CoreFoundation \
-    -I /usr/local/Cellar/libusb/1.0.19/include \
+    -I /usr/local/Cellar/libusb/1.0.20/include \
     -lobjc \
-    /usr/local/Cellar/libusb/1.0.19/lib/libusb-1.0.a  \
+    /usr/local/Cellar/libusb/1.0.20/lib/libusb-1.0.a  \
     -o upload up3dcomm.c up3d.c up3ddata.c upload.c
 
 strip upload
@@ -33,10 +33,10 @@ strip upload
 gcc -O3 -Wall \
     -framework IOKit \
     -framework CoreFoundation \
-    -I /usr/local/Cellar/libusb/1.0.19/include \
+    -I /usr/local/Cellar/libusb/1.0.20/include \
     -lobjc \
     -lncurses \
-    /usr/local/Cellar/libusb/1.0.19/lib/libusb-1.0.a  \
+    /usr/local/Cellar/libusb/1.0.20/lib/libusb-1.0.a  \
     -o upshell up3dcomm.c up3d.c up3ddata.c upshell.c
 
 strip upshell

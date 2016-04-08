@@ -9,6 +9,10 @@ G-Code to UpMachineCode (UMC) converter
 
 usage: up3dtranscode input.gcode output.umc
 
+or with nozzle height added as last parameter
+
+usage: up3dtranscode input.gcode output.umc 123.1
+
 ---
 
 ## upload: 
