@@ -13,7 +13,7 @@
 bool     UP3D_Open();
 void     UP3D_Close();
 
-bool     UP3D_IsPrinterResponsive();
+unsigned int UP3D_IsPrinterResponsive();
 
 uint32_t UP3D_GetParameter(uint8_t param);
 bool     UP3D_SetParameter(uint8_t param, uint32_t value);

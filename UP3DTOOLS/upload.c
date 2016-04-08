@@ -17,9 +17,17 @@
 
 int main(int argc, char const *argv[])
 {
-  if( argc != 2 )
+  int block_size = 72; // default number of blocks for USB transfer to SD Card  
+  bool bBlock = false;
+  
+  if (argc == 4)
+  	if (strcmp(argv[2], "-b") == 0)
+		if (sscanf(argv[3],"%d", &block_size) == 1)
+		  argc = 2, bBlock = true; 
+		  
+  if(argc != 2)
   {
-    printf("Usage: %s program.umc\n\n", argv[0]);
+    printf("Usage: %s program.umc [-b block_size]\n\n", argv[0]);
     return 0;
   }
 
@@ -30,12 +38,16 @@ int main(int argc, char const *argv[])
   if( !UP3D_Open() )
     return 2;
 
-  if( !UP3D_IsPrinterResponsive() )
+  unsigned int version = UP3D_IsPrinterResponsive();
+  if( !version )
   {
     upl_error( "UP printer is not responding\n" );
     UP3D_Close();
     return 3;
   }
+  
+  if (version < 330 & bBlock == false)
+  	block_size = 3;  // older firmware cannot handle larger than 64 bytes blocks
   
   UP3D_SetParameter(PARA_RED_BLUE_BLINK,10);
 
@@ -71,8 +83,8 @@ int main(int argc, char const *argv[])
   uint32_t tblocks = 0;
   for(;;)
   {
-    UP3D_BLK blocks[72];
-    int nblocks = fread( blocks, sizeof(UP3D_BLK), 72, fdat );
+    UP3D_BLK blocks[block_size];
+    int nblocks = fread( blocks, sizeof(UP3D_BLK), block_size, fdat );
     if( nblocks<=0 )
       break;
 
