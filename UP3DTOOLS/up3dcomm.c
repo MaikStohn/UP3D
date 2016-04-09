@@ -10,7 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <libusb.h>
+#include <libusb-1.0/libusb.h>
 
 //#define _DEBUG_IN_OUT_
 
