@@ -48,14 +48,14 @@ elif [[ "$OSTYPE" == "linux-gnu" ]]; then
 gcc -Os -std=c99 \
     -D_BSD_SOURCE \
     -o upload up3dcomm.c up3d.c up3ddata.c upload.c \
-    -lusb-1.0 -lpthread
+    -lusb-1.0 -lpthread -lm
 
 strip upload
 
 gcc -Os -std=c99 \
     -D_BSD_SOURCE \
     -o upshell up3dcomm.c up3d.c up3ddata.c upshell.c \
-    -lusb-1.0 -lpthread -lncurses
+    -lusb-1.0 -lpthread -lncurses -lm
 
 strip upshell
 
