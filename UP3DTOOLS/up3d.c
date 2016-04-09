@@ -121,7 +121,8 @@ bool UP3D_WriteBlocks( const UP3D_BLK *data, uint8_t blocks )
   {
     uint8_t b = blocks;
 
-    if( _up3d_connected_fw_version<330 ) b = 3; //older firmware versions support max 64 bytes (3 blocks) per write only
+    if( _up3d_connected_fw_version<330 )
+      if (b > 3) b = 3; //older firmware versions support max 64 bytes (3 blocks) per write only
 
     if( b>72 ) b = 72;                          //limit to max. 2048 bytes per logical packet
 
@@ -133,7 +134,7 @@ bool UP3D_WriteBlocks( const UP3D_BLK *data, uint8_t blocks )
       uint8_t UP3D_CMD_2F_X[] = { 0x2F, b };
       memcpy( &send[0], UP3D_CMD_2F_X, 2 );
       memcpy( &send[2], data, 20*b );
-      data++;
+      //data++;
       if( UP3DCOMM_Write( send, 2+20*b ) != 2+20*b )
         return false;
 
