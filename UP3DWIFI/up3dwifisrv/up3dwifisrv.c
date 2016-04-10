@@ -14,10 +14,9 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#include <endian.h>
-
 #include "up3dcomm.h"
 #include "up3d.h"
+#include "compat.h"
 
 #define UP_UDP_PORT 31246
 
