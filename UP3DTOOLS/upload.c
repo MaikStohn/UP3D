@@ -7,6 +7,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <unistd.h>
 #include <sys/time.h>
 
@@ -59,14 +60,14 @@ int main(int argc, char const *argv[])
     return 5;
   }
 
-  long int fpos = 0;
+  int64_t fpos = 0;
   fseek(fdat, 0, SEEK_END);
-  long int flen = ftell(fdat);
+  int64_t flen = ftell(fdat);
   fseek(fdat, 0, SEEK_SET);
 
   struct timeval tval_start, tval_now, tval_diff;
   gettimeofday(&tval_start, NULL);
-  long int usecs = 1;
+  int64_t usecs = 1;
 
   uint32_t tblocks = 0;
   for(;;)
@@ -88,9 +89,9 @@ int main(int argc, char const *argv[])
     fpos = ftell(fdat);
     gettimeofday(&tval_now, NULL);
     timersub(&tval_now, &tval_start, &tval_diff);
-    usecs = (long int)tval_diff.tv_sec*1000000+(long int)tval_diff.tv_usec;
+    usecs = (int64_t)tval_diff.tv_sec*1000000+(int64_t)tval_diff.tv_usec;
 
-    printf("UPload: %.2f kB sent (%ld%%) [%.2f kB/sec]\r",fpos/1024.0,fpos*100/flen, fpos*(1000000/1024.0)/usecs);
+    printf("UPload: %.2f kB sent (%"PRIi64"%%) [%.2f kB/sec]\r",fpos/1024.0,fpos*100/flen, fpos*(1000000/1024.0)/usecs);
     fflush(stdout);
   }
   printf("\n");
