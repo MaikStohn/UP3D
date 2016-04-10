@@ -90,7 +90,8 @@ extern settings_t settings;
 // When increasing this value, this stores less overall time in the segment buffer and vice versa. Make
 // certain the step segment buffer is increased/decreased to account for these changes.
 //#define ACCELERATION_TICKS_PER_SECOND 100.0
-#define ACCELERATION_TICKS_PER_SECOND (0.1/60.0)   //acceleration is handled in machine
+//#define ACCELERATION_TICKS_PER_SECOND (0.1/60.0)   //acceleration is handled in machine
+#define ACCELERATION_TICKS_PER_SECOND   0            //acceleration is handled in machine
 
 // Conversions
 #define MM_PER_INCH (25.40)
