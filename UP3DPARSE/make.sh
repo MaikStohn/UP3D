@@ -1,7 +1,7 @@
 #!/bin/bash
 
-gcc -std=c99 -O3 -o parse parse.c
-gcc -std=c99 -O3 -o convg convg.c
+gcc -std=c99 -Os -o parse parse.c
+gcc -std=c99 -Os -o convg convg.c
 
 if [[ "$OSTYPE" == "msys" ]]; then
 strip parse.exe

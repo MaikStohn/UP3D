@@ -96,7 +96,11 @@ void _dat_cmd_MoveF( float speed1, float pos1, float speed2, float pos2, bool is
     }
     if( speed2!=0 ) 
     {
-      _posE = pos2;
+      if( speed2<0 )
+        _posE = pos2;
+      else
+        _posE += pos2;
+      
       if( _minFeed>fabs(speed2) ) _minFeed = fabs(speed2);
       if( _maxFeed<fabs(speed2) ) _maxFeed = fabs(speed2);
       _Echange = true;
@@ -123,7 +127,7 @@ void _dat_cmd_MoveF( float speed1, float pos1, float speed2, float pos2, bool is
       }
       printf("\n");
 
-      if( _Echange ) printf("G92 E0\n");
+//      if( _Echange ) printf("G92 E0\n");
     }
   }
 }
