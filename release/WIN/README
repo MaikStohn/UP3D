@@ -11,6 +11,11 @@ upload.exe output.umc
 
 ---
 
+upinfo:
+upinfo.exe
+
+---
+
 upshell:
 upshell.exe
 

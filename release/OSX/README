@@ -9,6 +9,11 @@ upload:
 
 ---
 
+upinfo:
+./upinfo
+
+---
+
 upshell:
 ./upshell
 

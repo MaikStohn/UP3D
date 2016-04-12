@@ -9,6 +9,11 @@ sudo ./upload output.umc
 
 ---
 
+upinfo:
+sudo ./upinfo
+
+---
+
 upshell:
 sudo ./upshell
 
