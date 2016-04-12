@@ -103,6 +103,71 @@ typedef struct UP3D_BLK {
   } pdat4;
 } UP3D_BLK;
 
+typedef struct TT_tagPrinterInfoHeader {
+  float    flt_unk1;              //1.0
+  uint32_t u32_printerid;         //00002777 => UP Mini(M)
+  uint32_t u32_unk3;              //1
+  uint32_t u32_unk4;              //102
+  float    f_rom_version;         //6.1
+  uint32_t u32_printerserial;     //208460
+  uint32_t u32_unk7;              //100
+} TT_tagPrinterInfoHeader;
+
+typedef struct TT_tagPrinterInfoName {
+  char printer_name[63];          //UpMini
+} TT_tagPrinterInfoName;
+
+typedef struct TT_tagPrinterInfoData {
+  float    f_max_x;               //-120.0  maxX and direction
+  float    flt_unk2;              //0.0
+  float    flt_unk3;              //0.0
+  float    f_max_y;               //120.0   maxY and direction
+  float    f_max_z;               //130.0   maxZ and direction
+  float    f_steps_mm_x;          //850.0   X steps/mm
+  float    f_steps_mm_y;          //850.0   Y steps/mm
+  float    f_steps_mm_z;          //850.0   Z steps/mm
+  float    f_unknown_a;           //40.0    A? some factor? BUT in reality is 854.0 steps/mm
+  float    flt_unk10;             //0.0
+  float    flt_unk11;             //0.0
+  float    flt_unk12;             //0.0
+  float    flt_unk13;             //1.0
+  uint32_t u32_NumSets;           //4
+} TT_tagPrinterInfoData;
+
+typedef struct TT_tagPrinterInfoSet {
+  char  set_name[16];
+  float nozzle_diameter;
+  float layer_thickness;
+  float scan_width;
+  float scan_times;
+  float hatch_width;
+  float hatch_space;
+  float hatch_layer;
+  float support_width;
+  float support_space;
+  float support_layer;
+  float scan_speed;
+  float hatch_speed;
+  float support_speed;
+  float jump_speed;
+  float scan_scale;
+  float hatch_scale;
+  float support_scale;
+  float feed_scale;
+  float other_param_1;
+  float other_param_2;
+  float other_param_3;
+  float other_param_4;
+  float other_param_5;
+  float other_param_6;
+  float unused_1;
+  float unused_2;
+  float unused_3;
+  float unused_4;
+  float unused_5;
+  float unused_6;
+} TT_tagPrinterInfoSet;
+
 typedef struct TT_tagPrinterStatus {
   uint8_t  SystemStatus;
   uint8_t  PrintStatus;

@@ -20,6 +20,7 @@ bool     UP3D_SetParameter(uint8_t param, uint32_t value);
 
 bool     UP3D_GetSystemVar(uint8_t param, int32_t *var);
 bool     UP3D_GetPrinterStatus(TT_tagPrinterStatus *status);
+bool     UP3D_GetPrinterInfo(TT_tagPrinterInfoHeader *pihdr, TT_tagPrinterInfoName *piname, TT_tagPrinterInfoData *pidata, TT_tagPrinterInfoSet pisets[8]);
 
 bool     UP3D_ClearProgramBuf();
 bool     UP3D_UseSDProgramBuf( uint8_t progID, bool enableWrite );

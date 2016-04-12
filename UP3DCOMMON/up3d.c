@@ -29,7 +29,7 @@ void UP3D_Close()
 
 bool UP3D_IsPrinterResponsive()
 {
-  static const uint8_t UP3D_CMD_1[] = { 0x01, 0x00 }; //GetFwVersion ?
+  static const uint8_t UP3D_CMD_1[] = { 0x01, 0x00 }; //GetFwVersion
   uint8_t resp[2048];
   if( (UP3DCOMM_Write( UP3D_CMD_1, sizeof(UP3D_CMD_1) ) != sizeof(UP3D_CMD_1)) ||
       (5 != UP3DCOMM_Read( resp, sizeof(resp) )) ||
@@ -234,8 +234,43 @@ bool UP3D_SendRandom()
   return true;
 }
 
-///////////////////////////////////////////
+bool UP3D_GetPrinterInfo(TT_tagPrinterInfoHeader *pihdr, TT_tagPrinterInfoName *piname, TT_tagPrinterInfoData *pidata, TT_tagPrinterInfoSet pisets[8])
+{
+  static const uint8_t UP3D_CMD_52[] = { 0x52, 0x00 }; //GetPrinterInfo
+  uint8_t resp[2048];
+  if( (UP3DCOMM_Write( UP3D_CMD_52, sizeof(UP3D_CMD_52) ) != sizeof(UP3D_CMD_52)) )
+    return false;
+  
+  if( (1 != UP3DCOMM_Read( resp, 1 )) || (7 != resp[0]) )
+    return false;
 
+
+  if( (sizeof(TT_tagPrinterInfoHeader) != UP3DCOMM_Read( (uint8_t*)pihdr,  sizeof(TT_tagPrinterInfoHeader) )) ||
+      (sizeof(TT_tagPrinterInfoName  ) != UP3DCOMM_Read( (uint8_t*)piname, sizeof(TT_tagPrinterInfoName) )) ||
+      (sizeof(TT_tagPrinterInfoData)   != UP3DCOMM_Read( (uint8_t*)pidata, sizeof(TT_tagPrinterInfoData) ))
+    )
+    return false;
+
+  if( pidata->u32_NumSets>8 )
+    return false;
+
+  uint32_t s;
+  for( s=0; s<pidata->u32_NumSets; s++ )
+  {
+    if( (16 != UP3DCOMM_Read( (uint8_t*)(&pisets[s])+ 0, 16 )) ||
+        (60 != UP3DCOMM_Read( (uint8_t*)(&pisets[s])+16, 60 )) ||
+        (60 != UP3DCOMM_Read( (uint8_t*)(&pisets[s])+76, 60 ))
+      )
+      return false;
+  }
+
+  if( (1 != UP3DCOMM_Read( resp, 1 )) || (6 != resp[0]) )
+    return false;
+
+  return true;
+}
+
+///////////////////////////////////////////
 
 int32_t UP3D_GetMachineState()
 {
