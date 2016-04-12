@@ -67,7 +67,16 @@ bool UP3DCOMM_Open()
     UP3DCOMM_Close();
     return false;
   }
-  
+
+  //clean all outstanding printer responses (left from previous sessions)
+  for( ;; )
+  {
+    int read;
+    uint8_t buf[2048];
+    if( (0 != libusb_bulk_transfer( _libusb_dev_handle, (EP_IN | LIBUSB_ENDPOINT_IN), buf, sizeof(buf), &read, 10)) || (!read) )
+      break;
+  }
+
   return true;
 }
 
