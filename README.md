@@ -1,7 +1,13 @@
 # UP3D
 UP 3D Printer Tools
 
-Little How To: http://stohn.de/3d/index.php/2016/03/10/up3dtools-little-how-to
+Build status of MaikStohn/UP3D: [![Build Status](https://travis-ci.org/MaikStohn/UP3D.svg?branch=master)](https://travis-ci.org/MaikStohn/UP3D)
+
+Download: [latest](https://github.com/MaikStohn/UP3D/releases/latest)
+
+Instructions: [up3dtools-how-to](http://stohn.de/3d/index.php/2016/03/10/up3dtools-little-how-to)
+
+---
 
 ## up3dtranscode: 
 
