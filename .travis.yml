@@ -1,0 +1,27 @@
+sudo: required
+language: c
+script:
+- bash build-and-test.sh
+matrix:
+  include:
+  - os: linux
+    dist: trusty
+    compiler: gcc
+    env: PACKAGES_INSTALL="libusb-1.0-0-dev libncurses5-dev gcc-multilib"
+  - os: osx
+    compiler: clang
+    env: PACKAGES_INSTALL="libusb"
+  - os: linux
+    dist: trusty
+    compiler: gcc
+    env: OSTYPE=msys PACKAGES_INSTALL="libudev-dev gcc-mingw-w64-i686 libncurses5-dev"
+deploy:
+  provider: releases
+  skip_cleanup: true
+  api_key:
+    secure: meG5RFbOTyFosJxcEpDiQ5ExgtWF0bygc99H8M1JxQUeD1T/dnpT2w9f7QJaLxqV110eppqhcnKC65sqr+1idfXTjZ1nD8OER06bX72XVAiRz5Xln1wdVdwvVo6DgReeBM0omjaPkdx7CQpDpNRDizeNW7rRuWpY53aLEaOJ/WfAwBckffjTuepFcTXx2s/iVIG6lxeYiLd/uX+xCgY7c91stu7LHXmDXlb3er3ulCNq77EfR9IGg+A8XI+gejkfeDujB22Ytd5gTcf+eA1M8sWClSgq7rchm0P/C7o+nZ0szLI1XQ76vfIOts/lLx7tmHvAvclRVYbjP50Wm1I3aymTNmcA5DlpuX4blGIS2Ma7/NTUo1Txlp84L8/pWl0xMmVk+lo1cbGckk0oWr7cQQRrE9fhupGiW3BDSPnXJuGKKFeJ/jr6P3tJK6iAQCGqklcgXOWGt/3+wKZ0vuYFCEKSX5YvxC8MC+EYCbR6mLF5M4UBZ6jnzp2d4BHzgolp/hr6c5fi67UjkslgEh5T/dk+otmrMXPlk/gXQzCABJK3UwBDzZ1et2tnXWLJp2aOdOhA0GcUgTGl6UhUlN0lTGHi4v46dKZARrQTFUgiVza2Z25L7iHOUlnLwd1YwcYovp3wrNdyBvobRuSznfJaeBOyqz+BSZig68vUYIQ0nao=
+  file_glob: true
+  file: $(pwd)/build/*.zip
+  on:
+    tags: true
+    all_branches: true
