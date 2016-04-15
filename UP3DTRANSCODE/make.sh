@@ -14,7 +14,7 @@ if [[ "$OSTYPE" == "msys" ]]; then
 
 $CC -std=c99 -Os \
     -I../UP3DCOMMON \
-    -o up3dtranscode.exe hoststepper.c hostplanner.c gcodeparser.c ../UP3DCOMMON/up3ddata.c umcwriter.c up3dtranscode.c -lm
+    -o up3dtranscode.exe up3dconf.c hoststepper.c hostplanner.c gcodeparser.c ../UP3DCOMMON/up3ddata.c umcwriter.c up3dtranscode.c -lm
 
 $STRIP up3dtranscode.exe
 
@@ -26,7 +26,7 @@ $CC -std=c99 -Os \
     -framework IOKit \
     -framework CoreFoundation \
     -lobjc \
-    -o up3dtranscode hoststepper.c hostplanner.c gcodeparser.c ../UP3DCOMMON/up3ddata.c umcwriter.c up3dtranscode.c -lm
+    -o up3dtranscode up3dconf.c hoststepper.c hostplanner.c gcodeparser.c ../UP3DCOMMON/up3ddata.c umcwriter.c up3dtranscode.c -lm
 
 $STRIP up3dtranscode
 
@@ -35,7 +35,7 @@ elif [[ "$OSTYPE" == "linux-gnu" ]]; then
 
 $CC -std=c99 -Os \
     -I../UP3DCOMMON \
-    -o up3dtranscode hoststepper.c hostplanner.c gcodeparser.c ../UP3DCOMMON/up3ddata.c umcwriter.c up3dtranscode.c -lm
+    -o up3dtranscode up3dconf.c hoststepper.c hostplanner.c gcodeparser.c ../UP3DCOMMON/up3ddata.c umcwriter.c up3dtranscode.c -lm
 
 $STRIP up3dtranscode
 
