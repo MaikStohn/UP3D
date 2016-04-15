@@ -28,24 +28,47 @@
 #include <stdlib.h>
 #include <string.h>
 
+void print_usage_and_exit()
+{
+  printf("Usage: up3dtranscode machinetype input.gcode output.umc [nozzleheight]\n\n");
+  printf("          machinetype:  mini / classic / plus / box\n");
+  printf("          input.gcode:  g-code file from slic3r/cura/simplify\n");
+  printf("          output.umc:   up machine code file which will be generated\n");
+  printf("          nozzleheight: nozzle distance from bed (123.45)\n\n");
+  exit(0);
+}
 
 int main(int argc, char *argv[])
 {
-  double nozzle_height = 123.45; //set default nozzle height
+  if( (argc<4) || (argc>5) )
+    print_usage_and_exit();
 
-  if (argc == 4)
-	if (sscanf(argv[3],"%lf", &nozzle_height) != 1)
-		argc = 1; // failed to decode nozzle height
-
-  if( argc < 3 || argc > 4)
+  switch( argv[1][0] )
   {
-    printf("Usage: %s input.gcode output.umc [nozzle height]\n\n", argv[0]);
-    return 0;
+    case 'm': //mini
+      memcpy( &settings, &settings_mini, sizeof(settings) );
+      break;
+
+    case 'c': //classic
+    case 'p': //plus
+      memcpy( &settings, &settings_classic_plus, sizeof(settings) );
+      break;
+  
+    case 'b': //box
+      memcpy( &settings, &settings_box, sizeof(settings) );
+      break;
+
+    default:
+      printf("ERROR: Uknown machine type: %s\n\n",argv[1] );
+      print_usage_and_exit();
   }
 
-  FILE* fgcode = fopen( argv[1], "r" );
+  FILE* fgcode = fopen( argv[2], "r" );
   if( !fgcode )
-    return -1;
+  {
+    printf("ERROR: Could not open %s for reading\n\n", argv[2]);
+    print_usage_and_exit();
+  }
 
   char line[1024];
 
@@ -59,10 +82,24 @@ int main(int argc, char *argv[])
   umcwriter_finish();
   int32_t print_time = umcwriter_get_print_time();
 
+  double nozzle_height = 123.45; //set default nozzle height
+
+  if( 5 == argc )
+  {
+    if( 1 != sscanf(argv[4],"%lf", &nozzle_height) )
+    {
+      printf("ERROR: Invalid nozzle height: %s\n\n", argv[4]);
+      print_usage_and_exit();
+    }
+  }
+
   //gcode parsing pass 2 (write output)
   rewind( fgcode );
-  if( !umcwriter_init( argv[2], nozzle_height, print_time ) )
-    return -2;
+  if( !umcwriter_init( argv[3], nozzle_height, print_time ) )
+  {
+    printf("ERROR: Could not open %s for writing\n\n", argv[3]);
+    print_usage_and_exit();
+  }
 
   gcp_reset();
   while( fgets(line,sizeof(line),fgcode) )
@@ -75,8 +112,8 @@ int main(int argc, char *argv[])
   printf("Height: %5.2fmm / Layer: %3d / Time: ", gcp_get_height(), gcp_get_layer() );
   int h = print_time/3600; if(h){printf("%dh:",h); print_time -= h*3600;}
   int m = print_time/60; printf("%02dm:",m); print_time -= m*60;
-  printf("%02ds\n",print_time);
-  printf("Nozzle Height: %5.2fmm\n", nozzle_height);
+  printf("%02ds",print_time);
+  printf(" / Nozzle Height: %.2fmm\n", nozzle_height);
   
   return 0; 
 }

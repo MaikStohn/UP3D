@@ -33,20 +33,15 @@
 #define Y_AXIS 1
 #define A_AXIS 2
 
+/* real values are in up3dconf.c for each machine
 #define DEFAULT_X_STEPS_PER_MM ( 854.0 * 512) // *512 for internal fraction representation in printer
 #define DEFAULT_Y_STEPS_PER_MM ( 854.0 * 512)
 #define DEFAULT_A_STEPS_PER_MM ( 854.0 * 512) // ??? 40.0*512
 
-//MAX #define DEFAULT_X_MAX_RATE (700.0)    // mm/sec
-//MAX #define DEFAULT_Y_MAX_RATE (700.0)    // mm/sec
-//MAX #define DEFAULT_A_MAX_RATE (50.0)     // mm/sec
 #define DEFAULT_X_MAX_RATE (200.0)    // mm/sec
 #define DEFAULT_Y_MAX_RATE (200.0)    // mm/sec
 #define DEFAULT_A_MAX_RATE (50.0)     // mm/sec
 
-//MAX #define DEFAULT_X_ACCELERATION (5000) // mm/sec^2
-//MAX #define DEFAULT_Y_ACCELERATION (5000) // mm/sec^2
-//MAX #define DEFAULT_A_ACCELERATION (5000) // mm/sec^2
 #define DEFAULT_X_ACCELERATION (3000) // mm/sec^2
 #define DEFAULT_Y_ACCELERATION (3000) // mm/sec^2
 #define DEFAULT_A_ACCELERATION (300)  // mm/sec^2
@@ -56,6 +51,7 @@
 #define DEFAULT_A_MAX_TRAVEL 100000000.0 // mm
 
 #define DEFAULT_JUNCTION_DEVIATION 0.01  // mm
+*/
 
 //global settings
 typedef struct {
@@ -65,8 +61,15 @@ typedef struct {
   double acceleration[N_AXIS];
   double max_travel[N_AXIS];
   double junction_deviation;
+  int    x_axes;
+  int    y_axes;
 } settings_t;
+
 extern settings_t settings;
+
+extern settings_t settings_mini;
+extern settings_t settings_classic_plus;
+extern settings_t settings_box;
 
 // Minimum planner junction speed. Sets the default minimum junction speed the planner plans to at
 // every buffer block junction, except for starting from rest and end of the buffer, which are always
@@ -100,5 +103,6 @@ extern settings_t settings;
 // Useful macros
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) < (b)) ? (a) : (b))
+
 
 #endif //up3d_h

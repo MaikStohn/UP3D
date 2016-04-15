@@ -18,6 +18,7 @@
 
 #include "umcwriter.h"
 #include "up3ddata.h"
+#include "up3dconf.h"
 #include "hostplanner.h"
 #include "hoststepper.h"
 
@@ -179,12 +180,12 @@ void umcwriter_home(int32_t axes)
   umcwriter_print_time += 7; //apx. 7 seconds for homeing
   
   UP3D_BLK blks[2];
-  if( 0==axes ) {UP3D_PROG_BLK_Home( blks, UP3DAXIS_X ); pos[1] = 0; }
-  if( 1==axes ) {UP3D_PROG_BLK_Home( blks, UP3DAXIS_Y ); pos[0] = 0; }
+  if( 0==axes ) {UP3D_PROG_BLK_Home( blks, UP3DAXIS_X ); pos[settings.x_axes] = 0; }
+  if( 1==axes ) {UP3D_PROG_BLK_Home( blks, UP3DAXIS_Y ); pos[settings.y_axes] = 0; }
   if( 2==axes ) {UP3D_PROG_BLK_Home( blks, UP3DAXIS_Z ); umcwriter_Z = 0; }
   _umcwriter_write_file(blks, 2);
 
-  umcwriter_planner_set_position( pos[1], pos[0], umcwriter_Z );
+  umcwriter_planner_set_position( pos[settings.x_axes], pos[settings.y_axes], umcwriter_Z );
 }
 
 void umcwriter_virtual_home(double speedX, double speedY, double speedZ)
@@ -193,8 +194,12 @@ void umcwriter_virtual_home(double speedX, double speedY, double speedZ)
 
   umcwriter_print_time += 5; //apx. 5 seconds for virtual homeing
 
+  double speed[2];
+  speed[settings.x_axes] = speedX;
+  speed[settings.y_axes] = speedY;
+
   UP3D_BLK blks[2];
-  UP3D_PROG_BLK_MoveF( blks, -speedY,0, -speedX,0, -speedZ,0, 0,0);
+  UP3D_PROG_BLK_MoveF( blks, -speed[0],0, -speed[1],0, -speedZ,0, 0,0);
   _umcwriter_write_file( blks, 2);
   umcwriter_planner_set_position(0,0,0);
 }
@@ -222,8 +227,16 @@ void umcwriter_move_direct(double X, double Y, double Z, double A, double F)
   if(tX>t) t=tX; if(tY>t) t=tY; if(tZ>t) t=tZ;
   umcwriter_print_time += t;
 
+  double topos[2];
+  topos[settings.x_axes] = X;
+  topos[settings.y_axes] = -Y;
+
+  double feed[2];
+  feed[settings.x_axes] = feedX;
+  feed[settings.y_axes] = feedY;
+
   UP3D_BLK blks[2];
-  UP3D_PROG_BLK_MoveF( blks,-feedY,-Y,-feedX,X,-feedZ,-(umcwriter_Z_height-Z),feedA,relA);
+  UP3D_PROG_BLK_MoveF( blks,-feed[0],topos[0],-feed[1],topos[1],-feedZ,-(umcwriter_Z_height-Z),feedA,relA);
   _umcwriter_write_file(blks, 2);
 
   umcwriter_planner_set_position(X,Y,A);
@@ -233,7 +246,10 @@ void umcwriter_move_direct(double X, double Y, double Z, double A, double F)
 void umcwriter_planner_set_position(double X, double Y, double A)
 {
   umcwriter_planner_sync();
-  double pos[]={-Y,X,A};
+  double pos[3];
+  pos[settings.x_axes] = X;
+  pos[settings.y_axes] = -Y;
+  pos[2] = A;
   plan_set_position(pos);
   st_reset();
 }
@@ -250,7 +266,10 @@ void umcwriter_planner_add(double X, double Y, double A, double F)
     _umcwriter_write_file(&blk, 1);
   }
 
-  double pos[] = {-Y,X,A};
+  double pos[3];
+  pos[settings.x_axes] = X;
+  pos[settings.y_axes] = -Y;
+  pos[2] = A;
   double feed = F/60;
   plan_buffer_line( pos, feed, false);
 }

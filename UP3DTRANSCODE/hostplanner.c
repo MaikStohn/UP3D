@@ -36,14 +36,6 @@
 
 #define get_direction_pin_mask(a) (1<<a)
 
-settings_t settings = { 
-  .steps_per_mm = { DEFAULT_X_STEPS_PER_MM,DEFAULT_Y_STEPS_PER_MM,DEFAULT_A_STEPS_PER_MM },
-  .max_rate = { DEFAULT_X_MAX_RATE,DEFAULT_Y_MAX_RATE,DEFAULT_A_MAX_RATE },
-  .acceleration = { DEFAULT_X_ACCELERATION,DEFAULT_Y_ACCELERATION,DEFAULT_A_ACCELERATION },
-  .max_travel = { DEFAULT_X_MAX_TRAVEL,DEFAULT_Y_MAX_TRAVEL,DEFAULT_A_MAX_TRAVEL },
-  .junction_deviation = DEFAULT_JUNCTION_DEVIATION,
-};
-
 #define SOME_LARGE_VALUE 1.0E+38 // Used by rapids and acceleration maximization calculations. Just needs
                                  // to be larger than any feasible (mm/min)^2 or mm/sec^2 value.
 
