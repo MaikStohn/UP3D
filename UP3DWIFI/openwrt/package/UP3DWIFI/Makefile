@@ -1,7 +1,7 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=up3dwifi
-PKG_VERSION:=2016-04-08
+PKG_VERSION:=2016-04-15
 PKG_RELEASE=$(PKG_SOURCE_VERSION)
 
 PKG_SOURCE_PROTO:=git
@@ -36,6 +36,8 @@ define Package/up3dwifi/install
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/UP3DWIFI/up3dwifisrv/up3dwifisrv $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
 	$(INSTALL_DATA) ./up3dwifi.hotplug $(1)/etc/hotplug.d/usb/11-up3dwifi
+	$(INSTALL_DATA) ./up3dwifi.initd $(1)/etc/init.d/up3dwifilogo
+	$(INSTALL_DATA) ./up3dwifi.modulesd $(1)/etc/modules.d/i2c-gpio-custom
 endef
 
 $(eval $(call BuildPackage,up3dwifi))
