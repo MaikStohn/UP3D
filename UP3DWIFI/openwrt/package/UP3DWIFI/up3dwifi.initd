@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=10
+START=50
 
 start() {
 	/usr/bin/up3dwifilogo
