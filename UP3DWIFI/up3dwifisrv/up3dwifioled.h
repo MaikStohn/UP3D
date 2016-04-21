@@ -1,6 +1,8 @@
 /*
-  up3dwifilogo.c for UP3DWIFI
+  up3dwifioled.h for UP3DWIFI
   M. Stohn 2016
+  
+  Parts derived from Daniel Eichhorn: http://github.com/squix78/esp8266-oled-ssd1306
 
   This is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,31 +18,15 @@
   If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdio.h>
-#include "up3dwifioled.h"
-#include "up3dwifilogo.h"
+#include <inttypes.h>
 
-#include "up3dwififont.h"
+int  oled_init();
+void oled_deinit();
+void oled_send_fb(const uint8_t *frame);
 
-int main(int argc, char* argv[])
-{
-  int fdoled = oled_init();
-  if( fdoled<0 )
-  {
-    printf("could not find oled\n");
-    return 1;
-  }
-
-  //send logo
-  oled_send_fb( up3dwifilogo );
-
-
-//TEST
-  oled_fb_clear();
-  oled_fb_setfont(ArialMT_Plain_10);
-  oled_fb_writestring( 0,0, "Hello World!", 1 );
-  oled_fb_update();
-
-  //oled_deinit();
-  return 0;
-}
+void oled_fb_clear();
+void oled_fb_update();
+void oled_fb_setpixel(const int x, const int y, const int mode);
+void oled_fb_setfont(const uint8_t* font);
+int  oled_fb_getstringwidth(char* text);
+void oled_fb_writestring(const int x, const int y, char* text, const int mode);
