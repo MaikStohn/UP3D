@@ -1,5 +1,5 @@
 /*
-  up3ddata.cpp for UP3DTranscoder
+  up3ddata.c for UP3DTranscoder
   M. Stohn 2016
 
   This is free software: you can redistribute it and/or modify
