@@ -24,8 +24,7 @@
 
 int main(int argc, char* argv[])
 {
-  int fdoled = oled_init();
-  if( fdoled<0 )
+  if( !oled_init() )
   {
     printf("could not find oled\n");
     return 1;
@@ -39,6 +38,10 @@ int main(int argc, char* argv[])
   oled_fb_clear();
   oled_fb_setfont(ArialMT_Plain_10);
   oled_fb_writestring( 0,0, "Hello World!", 1 );
+  oled_fb_setfont(ArialMT_Plain_16);
+  oled_fb_writestring( 0,11, "Hello World!", 1 );
+  oled_fb_setfont(ArialMT_Plain_24);
+  oled_fb_writestring( 0,30, "Hello World!", 1 );
   oled_fb_update();
 
   //oled_deinit();

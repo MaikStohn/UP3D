@@ -1,7 +1,7 @@
 /*
   up3dwififont.h for UP3DWIFI
   M. Stohn 2016
-  
+
   Parts derived from Daniel Eichhorn: http://github.com/squix78/esp8266-oled-ssd1306
 
   This is free software: you can redistribute it and/or modify
