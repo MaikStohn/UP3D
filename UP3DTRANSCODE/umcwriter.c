@@ -32,6 +32,7 @@ static double umcwriter_Z;
 static double umcwriter_Z_height;
 static double umcwriter_print_time;
 static double umcwriter_print_time_max;
+static double g_r0, g_r1, g_r2;
 
 static int _umcwriter_write_file(UP3D_BLK* pblks, uint32_t blks )
 {
@@ -275,6 +276,15 @@ void umcwriter_planner_set_position(double X, double Y, double A)
   pos[2] = A;
   plan_set_position(pos);
   st_reset();
+
+/*
+printf("D: %.6lf  %.6lf  %.6lf\n", g_r0-pos[0], g_r1-pos[1], g_r2-pos[2] );
+printf("R: %.6lf  %.6lf  %.6lf\n", g_r0, g_r1, g_r2 );
+printf("N: %.6lf  %.6lf  %.6lf\n", pos[0], pos[1], pos[2] );
+printf("\n");
+*/
+
+  g_r0 = pos[0]; g_r1 = pos[1]; g_r2 = pos[2];
 }
 
 void umcwriter_planner_add(double X, double Y, double A, double F)
@@ -287,6 +297,13 @@ void umcwriter_planner_add(double X, double Y, double A, double F)
     UP3D_BLK blk;
     UP3D_PROG_BLK_MoveL(&blk,pseg->p1,pseg->p2,pseg->p3,pseg->p4,pseg->p5,pseg->p6,pseg->p7,pseg->p8);
     _umcwriter_write_file(&blk, 1);
+
+    //calculate reference position for error tracking
+    int32_t p1 = pseg->p1; int32_t p2 = pseg->p2; int32_t p3 = pseg->p3; int32_t p4 = pseg->p4;
+    int32_t p5 = pseg->p5; int32_t p6 = pseg->p6; int32_t p7 = pseg->p7; int32_t p8 = pseg->p8;
+    g_r0 += (floor((float)((p3*p1+p6*p1*p1/2))/512)*512)/settings.steps_per_mm[0];
+    g_r1 += (floor((float)((p4*p1+p7*p1*p1/2))/512)*512)/settings.steps_per_mm[1];
+    g_r2 += (floor((float)((p5*p1+p8*p1*p1/2))/512)*512)/settings.steps_per_mm[2];
   }
 
   double pos[3];
@@ -307,6 +324,13 @@ void umcwriter_planner_sync()
     UP3D_BLK blk;
     UP3D_PROG_BLK_MoveL(&blk,pseg->p1,pseg->p2,pseg->p3,pseg->p4,pseg->p5,pseg->p6,pseg->p7,pseg->p8);
     _umcwriter_write_file(&blk, 1);
+
+    //calculate reference position for error tracking
+    int32_t p1 = pseg->p1; int32_t p2 = pseg->p2; int32_t p3 = pseg->p3; int32_t p4 = pseg->p4;
+    int32_t p5 = pseg->p5; int32_t p6 = pseg->p6; int32_t p7 = pseg->p7; int32_t p8 = pseg->p8;
+    g_r0 += (floor((float)((p3*p1+p6*p1*p1/2))/512)*512)/settings.steps_per_mm[0];
+    g_r1 += (floor((float)((p4*p1+p7*p1*p1/2))/512)*512)/settings.steps_per_mm[1];
+    g_r2 += (floor((float)((p5*p1+p8*p1*p1/2))/512)*512)/settings.steps_per_mm[2];
   }
 }
 
