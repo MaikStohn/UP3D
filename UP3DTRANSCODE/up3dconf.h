@@ -63,6 +63,21 @@ typedef struct {
   double junction_deviation;
   int    x_axes;
   int    y_axes;
+  int    x_dir;
+  int    y_dir;
+  int    z_dir;
+  double x_hspeed_hi;
+  double y_hspeed_hi;
+  double z_hspeed_hi;
+  double x_hofs_hi;
+  double y_hofs_hi;
+  double z_hofs_hi;
+  double x_hspeed_lo;
+  double y_hspeed_lo;
+  double z_hspeed_lo;
+  double x_hofs_lo;
+  double y_hofs_lo;
+  double z_hofs_lo;
 } settings_t;
 
 extern settings_t settings;
