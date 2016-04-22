@@ -2,8 +2,6 @@
   up3dwifioled.c for UP3DWIFI
   M. Stohn 2016
 
-  Parts derived from Daniel Eichhorn: http://github.com/squix78/esp8266-oled-ssd1306
-
   This is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
@@ -31,6 +29,7 @@
 #endif
 
 #include "up3dwifioled.h"
+#include "up3dwififont.h"
 
 static int      _fd_oled;
 static uint8_t  _framebuffer[128*64/8];
@@ -152,35 +151,53 @@ int oled_fb_getstringwidth(char* text)
   return width;
 }
 
+int oled_fb_writechar(const int x, const int y, const uint8_t ch, const int mode)
+{
+  int i, j, width, astart, aend;
+  unsigned int index, dat;
+  uint8_t* pData;
+  uint8_t c = ch;
+
+  if( (c<FONT_MYFONT_FIRST_CH) || (c>=FONT_MYFONT_LAST_CH) )
+    return 0;
+  c -= FONT_MYFONT_FIRST_CH;
+
+  index = 0;
+  pData = (uint8_t*)FONT_MYFONT_WIDTHS;
+
+  for( i=0; i<c; i++)
+  {
+    dat = *pData++;
+    if(dat&0xF)
+      index += (dat&0xF)*(FONT_MYFONT_HEIGHT-(dat>>6)-((dat>>4)&3));
+    else
+      i += (dat&0xf0)?*pData++:dat>>4;
+  }
+
+  width = (*pData)&0xF;
+  astart = (*pData)>>6;
+  aend = ((*pData)>>4)&3;
+  pData = (uint8_t*)FONT_MYFONT_BITS + (index>>3);
+  dat = ((*pData++)|0x100)<<(index&7);
+
+  for( j=x; j<x+width; j++)
+  {
+    for( i=y+astart; i<y+FONT_MYFONT_HEIGHT-aend; i++) 
+    {
+      if( dat&0x80 )
+        oled_fb_setpixel( j, i, mode );
+      dat <<= 1;
+      if( dat & 0x10000 )
+        dat = (*pData++)|0x100;
+    }
+  }
+  return width+1;
+}
+
 void oled_fb_writestring(const int x, const int y, char* text, const int mode)
 {
-  int sx = 0;
+  int sx = x;
   for( ;*text; text++ )
-  {
-    uint8_t  c       = *text - _oled_fb_font[FIRST_CHAR_POS];
-    uint8_t  cwidth  = _oled_fb_font[CHAR_WIDTH_START_POS + c];
-    uint8_t  cheight = _oled_fb_font[HEIGHT_POS];
-    uint32_t cbitpos = CHAR_WIDTH_START_POS + _oled_fb_font[CHAR_NUM_POS];
-
-    uint8_t p;
-    for( p=0; p<c; p++ )
-      cbitpos += ((_oled_fb_font[CHAR_WIDTH_START_POS + p]*cheight)>>3) + 1;
-
-    uint32_t dat = 0x100;
-    int px,py;
-    for( py=0; py<cheight; py++ )
-    {
-      for( px=0; px<cwidth; px++ )
-      {
-        if( dat & 0x100 )
-          dat = _oled_fb_font[cbitpos++]|0x10000;
-
-        if( dat & 1 )
-          oled_fb_setpixel( x + sx + px, y + py, mode );
-        dat >>= 1;
-      }
-    }
-    sx += cwidth;
-  }
+    sx += oled_fb_writechar( sx, y, *text, mode );
 }
 

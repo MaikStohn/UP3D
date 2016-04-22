@@ -36,12 +36,18 @@ int main(int argc, char* argv[])
 
 //TEST
   oled_fb_clear();
+  oled_fb_writestring( 0, 0, "Hello World!", 1 );
+  oled_fb_writestring( 0,16, "Hello World!", 1 );
+  oled_fb_writestring( 0,32, "Hello World!", 1 );
+  oled_fb_writestring( 0,48, "Hello World!", 1 );
+/*
   oled_fb_setfont(ArialMT_Plain_10);
   oled_fb_writestring( 0,0, "Hello World!", 1 );
   oled_fb_setfont(ArialMT_Plain_16);
   oled_fb_writestring( 0,11, "Hello World!", 1 );
-  oled_fb_setfont(ArialMT_Plain_24);
+  oled_fb_setfont(DejaVu_Sans_Condensed_Plain_12);
   oled_fb_writestring( 0,30, "Hello World!", 1 );
+*/
   oled_fb_update();
 
   //oled_deinit();
