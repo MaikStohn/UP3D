@@ -24,7 +24,7 @@
 
 #define F_CPU 50000000
 
-#define X_INSERT_STEP_CORRECTIONS
+//#define X_INSERT_STEP_CORRECTIONS
 //#define X_WAIT_HEATBED_FACTOR
 
 #define N_AXIS 3 // Number of axes (X,Y,A)
