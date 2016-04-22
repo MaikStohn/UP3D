@@ -32,6 +32,7 @@ static double umcwriter_Z;
 static double umcwriter_Z_height;
 static double umcwriter_print_time;
 static double umcwriter_print_time_max;
+static double g_r0, g_r1, g_r2;
 
 static int _umcwriter_write_file(UP3D_BLK* pblks, uint32_t blks )
 {
@@ -177,13 +178,36 @@ void umcwriter_home(int32_t axes)
   double pos[3];
   plan_get_position(pos);
 
-  umcwriter_print_time += 7; //apx. 7 seconds for homeing
+  umcwriter_print_time += 7; //apx. 7 seconds for homing
   
-  UP3D_BLK blks[2];
-  if( 0==axes ) {UP3D_PROG_BLK_Home( blks, UP3DAXIS_X ); pos[settings.x_axes] = 0; }
-  if( 1==axes ) {UP3D_PROG_BLK_Home( blks, UP3DAXIS_Y ); pos[settings.y_axes] = 0; }
-  if( 2==axes ) {UP3D_PROG_BLK_Home( blks, UP3DAXIS_Z ); umcwriter_Z = 0; }
-  _umcwriter_write_file(blks, 2);
+  UP3D_BLK blk;
+  
+  switch( axes )
+  {
+    case 0:
+      UP3D_PROG_BLK_Home( &blk, settings.y_axes, settings.y_dir, settings.y_hofs_hi, settings.y_hspeed_hi );
+      _umcwriter_write_file(&blk, 1);
+      UP3D_PROG_BLK_Home( &blk, settings.y_axes, settings.y_dir, settings.y_hofs_lo, settings.y_hspeed_lo );
+      _umcwriter_write_file(&blk, 1);
+      pos[settings.y_axes] = 0;
+      break;
+      
+    case 1:
+      UP3D_PROG_BLK_Home( &blk, settings.x_axes, settings.x_dir, settings.x_hofs_hi, settings.x_hspeed_hi );
+      _umcwriter_write_file(&blk, 1);
+      UP3D_PROG_BLK_Home( &blk, settings.x_axes, settings.x_dir, settings.x_hofs_lo, settings.x_hspeed_lo );
+      _umcwriter_write_file(&blk, 1);
+      pos[settings.x_axes] = 0;
+      break;
+      
+    case 2:
+      UP3D_PROG_BLK_Home( &blk, UP3DAXIS_Z, settings.z_dir, settings.z_hofs_hi, settings.z_hspeed_hi );
+      _umcwriter_write_file(&blk, 1);
+      UP3D_PROG_BLK_Home( &blk, UP3DAXIS_Z, settings.z_dir, settings.z_hofs_lo, settings.z_hspeed_lo );
+      _umcwriter_write_file(&blk, 1);
+      umcwriter_Z = 0;
+      break;
+  }
 
   umcwriter_planner_set_position( pos[settings.x_axes], pos[settings.y_axes], umcwriter_Z );
 }
@@ -228,15 +252,15 @@ void umcwriter_move_direct(double X, double Y, double Z, double A, double F)
   umcwriter_print_time += t;
 
   double topos[2];
-  topos[settings.x_axes] = X;
-  topos[settings.y_axes] = -Y;
+  topos[settings.x_axes] = X * settings.x_dir;
+  topos[settings.y_axes] = Y * settings.y_dir;
 
   double feed[2];
   feed[settings.x_axes] = feedX;
   feed[settings.y_axes] = feedY;
 
   UP3D_BLK blks[2];
-  UP3D_PROG_BLK_MoveF( blks,-feed[0],topos[0],-feed[1],topos[1],-feedZ,-(umcwriter_Z_height-Z),feedA,relA);
+  UP3D_PROG_BLK_MoveF( blks,-feed[0],topos[0],-feed[1],topos[1],-feedZ,-(umcwriter_Z_height-Z),feedA,relA );
   _umcwriter_write_file(blks, 2);
 
   umcwriter_planner_set_position(X,Y,A);
@@ -247,11 +271,20 @@ void umcwriter_planner_set_position(double X, double Y, double A)
 {
   umcwriter_planner_sync();
   double pos[3];
-  pos[settings.x_axes] = X;
-  pos[settings.y_axes] = -Y;
+  pos[settings.x_axes] = X * settings.x_dir;
+  pos[settings.y_axes] = Y * settings.y_dir;
   pos[2] = A;
   plan_set_position(pos);
   st_reset();
+
+/*
+printf("D: %.6lf  %.6lf  %.6lf\n", g_r0-pos[0], g_r1-pos[1], g_r2-pos[2] );
+printf("R: %.6lf  %.6lf  %.6lf\n", g_r0, g_r1, g_r2 );
+printf("N: %.6lf  %.6lf  %.6lf\n", pos[0], pos[1], pos[2] );
+printf("\n");
+*/
+
+  g_r0 = pos[0]; g_r1 = pos[1]; g_r2 = pos[2];
 }
 
 void umcwriter_planner_add(double X, double Y, double A, double F)
@@ -264,11 +297,18 @@ void umcwriter_planner_add(double X, double Y, double A, double F)
     UP3D_BLK blk;
     UP3D_PROG_BLK_MoveL(&blk,pseg->p1,pseg->p2,pseg->p3,pseg->p4,pseg->p5,pseg->p6,pseg->p7,pseg->p8);
     _umcwriter_write_file(&blk, 1);
+
+    //calculate reference position for error tracking
+    int32_t p1 = pseg->p1; int32_t p2 = pseg->p2; int32_t p3 = pseg->p3; int32_t p4 = pseg->p4;
+    int32_t p5 = pseg->p5; int32_t p6 = pseg->p6; int32_t p7 = pseg->p7; int32_t p8 = pseg->p8;
+    g_r0 += (floor((float)((p3*p1+p6*p1*p1/2))/512)*512)/settings.steps_per_mm[0];
+    g_r1 += (floor((float)((p4*p1+p7*p1*p1/2))/512)*512)/settings.steps_per_mm[1];
+    g_r2 += (floor((float)((p5*p1+p8*p1*p1/2))/512)*512)/settings.steps_per_mm[2];
   }
 
   double pos[3];
-  pos[settings.x_axes] = X;
-  pos[settings.y_axes] = -Y;
+  pos[settings.x_axes] = X * settings.x_dir;
+  pos[settings.y_axes] = Y * settings.y_dir;
   pos[2] = A;
   double feed = F/60;
   plan_buffer_line( pos, feed, false);
@@ -284,6 +324,13 @@ void umcwriter_planner_sync()
     UP3D_BLK blk;
     UP3D_PROG_BLK_MoveL(&blk,pseg->p1,pseg->p2,pseg->p3,pseg->p4,pseg->p5,pseg->p6,pseg->p7,pseg->p8);
     _umcwriter_write_file(&blk, 1);
+
+    //calculate reference position for error tracking
+    int32_t p1 = pseg->p1; int32_t p2 = pseg->p2; int32_t p3 = pseg->p3; int32_t p4 = pseg->p4;
+    int32_t p5 = pseg->p5; int32_t p6 = pseg->p6; int32_t p7 = pseg->p7; int32_t p8 = pseg->p8;
+    g_r0 += (floor((float)((p3*p1+p6*p1*p1/2))/512)*512)/settings.steps_per_mm[0];
+    g_r1 += (floor((float)((p4*p1+p7*p1*p1/2))/512)*512)/settings.steps_per_mm[1];
+    g_r2 += (floor((float)((p5*p1+p8*p1*p1/2))/512)*512)/settings.steps_per_mm[2];
   }
 }
 

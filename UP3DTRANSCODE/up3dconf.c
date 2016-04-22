@@ -26,8 +26,10 @@ settings_t settings_mini = {
   .acceleration = { 3000, 3000, 300 },
   .max_travel = { 122.0, 122.0, 100000000.0 },
   .junction_deviation = 0.01,
-  .x_axes = 1,
-  .y_axes = 0,
+  .x_axes =  1, .y_axes =  0,
+  .x_dir  =  1, .y_dir  = -1, .z_dir  = -1,
+  .x_hspeed_hi = 50.0, .y_hspeed_hi = 50.0, .z_hspeed_hi = 50.0, .x_hofs_hi =  4.0, .y_hofs_hi =  4.0, .z_hofs_hi =  6.0,
+  .x_hspeed_lo = 10.0, .y_hspeed_lo = 10.0, .z_hspeed_lo =  3.0, .x_hofs_lo =  9.0, .y_hofs_lo =  2.0, .z_hofs_lo =  2.0,
 };
 
 settings_t settings_classic_plus = { 
@@ -36,8 +38,10 @@ settings_t settings_classic_plus = {
   .acceleration = { 3000, 3000, 300 },
   .max_travel = { 142.0, 142.0, 100000000.0 },
   .junction_deviation = 0.01,
-  .x_axes = 1,
-  .y_axes = 0,
+  .x_axes =  1, .y_axes =  0,
+  .x_dir  =  1, .y_dir  = -1, .z_dir  = -1,
+  .x_hspeed_hi = 50.0, .y_hspeed_hi = 50.0, .z_hspeed_hi = 50.0, .x_hofs_hi =  4.0, .y_hofs_hi =  4.0, .z_hofs_hi =  6.0,
+  .x_hspeed_lo = 10.0, .y_hspeed_lo = 10.0, .z_hspeed_lo =  3.0, .x_hofs_lo =  2.0, .y_hofs_lo =  2.0, .z_hofs_lo =  2.0,
 };
 
 settings_t settings_box = { 
@@ -46,6 +50,8 @@ settings_t settings_box = {
   .acceleration = { 3000, 3000, 300 },
   .max_travel = { 264.0, 212.0, 100000000.0 },
   .junction_deviation = 0.01,
-  .x_axes = 0,
-  .y_axes = 1,
+  .x_axes =  1, .y_axes =  0,
+  .x_dir  = -1, .y_dir  =  1, .z_dir  = -1,
+  .x_hspeed_hi = 50.0, .y_hspeed_hi = 50.0, .z_hspeed_hi = 50.0, .x_hofs_hi =  4.0, .y_hofs_hi =  4.0, .z_hofs_hi =  6.0,
+  .x_hspeed_lo = 10.0, .y_hspeed_lo = 10.0, .z_hspeed_lo =  3.0, .x_hofs_lo =  2.0, .y_hofs_lo =  2.0, .z_hofs_lo =  2.0,
 };

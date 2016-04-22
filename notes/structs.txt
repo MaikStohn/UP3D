@@ -1,0 +1,52 @@
+6791 MotorParam 0000006C Auto struct {float AxizScale;int MaxPos;int MinPos;unsigned int MaxSpeed;unsigned int ProgJogSpeed;unsigned int MaxAcc;unsigned int JogAcc;unsigned int StopAcc;unsigned int PWMGen;unsigned int PWMPort;unsigned int PWMPin;unsigned int PWMGenBit;unsigned int PWMOut;unsigned int PWMWidth;unsigned int DirPort;unsigned int DirPin;unsigned int NegDirWrite;unsigned int PosDirWrite;unsigned int NegLimPort;unsigned int NegLimPin;unsigned int PosLimPort;unsigned int PosLimPin;unsigned int HomPort;unsigned int HomPin;unsigned int NLimReverse;unsigned int PLimReverse;unsigned int HLimReverse;}
+
+6792 MotorStatus 00000038  struct {int CurPos;int PWMCountPos;int TargetPos;unsigned int MotorMode;int MoveDir;int CurSpeed;unsigned int NegLimited;unsigned int PosLimited;unsigned int HomLimited;unsigned int JogStopFlag;unsigned int FindHomeFlag;int Record0;int Record1;int Record2;}
+
+6793 HeatControll 00000048  struct {unsigned int OutPort;unsigned int TempVar;unsigned int HeatOnVar;float KX;float KC;float TargetTemp;float LowTemp;float HighTemp;float KeepTemp;float StartHeat;float StopHeat;float MaxIntegral;float KP;float KI;float KD;float Reversed1;float Reversed2;float Reversed3;}
+
+6794 tagHeatData 00000024  struct {unsigned int MeasurnSum;float MeasurnCount;float PrevTemp;float TempAdd;float TempDelta;float TempDiff;float KISum;float HeatPrecent;unsigned int PowerOnCount;}
+
+6795 MoveSeg 00000020  struct {int SegNum;int SegPeriod;int Speed;int Acc;int Pos;int Sum;int CurSeg;int TargetSum;}    
+6796 MoveBuf 00000144  struct {unsigned __int8 SegCount;unsigned __int8 CurCount;__int16 PrevPulse;MOVESEG MoveSeg[10];}
+
+
+6798 MoveCmd       00000010 Auto struct {unsigned __int16 SegNum;unsigned __int16 SegPeriod;__int16 XSpeed;__int16 YSpeed;__int16 ASpeed;__int16 XAcc;__int16 YAcc;__int16 AAcc;}                    
+6799 IOCmd         00000008      struct {unsigned int Port;unsigned int Status;}                                                                                                                     
+6800 SetSysVarCmd  00000008      struct {unsigned int var;int val;}                                                                                                                                  
+6801 SysVarAddCmd  00000008      struct {unsigned int var;int val;}                                                                                                                                  
+6802 FlashVarCmd   0000000C      struct {unsigned __int8 type;unsigned __int8 var;int val;int jumpline;}                                                                                             
+6803 WaitSysVarCmd 0000000C      struct {unsigned int var;int val;unsigned int mode;}                                                                                                                
+6804 IfSysVarCmd   00000010      struct {unsigned int var;int val;unsigned int mode;int jumpline;}                                                                                                   
+6805 JogCmd        00000010      struct {float Speed13;float Pos13;float Speed24;float Pos24;}                                                                                                       
+6806 HomeCmd       0000000C      struct {unsigned int MotorID;float HSpeed;float HOffDis;}                                                                                                           
+6807 CopyRightCmd  0000000C      struct {unsigned int DwellTime;unsigned int SerialID;unsigned __int8 LicenseCount;unsigned __int8 bCountDown;unsigned __int8 CmdVerify1;unsigned __int8 CmdVerify2;}
+6808 MaterialCmd   0000000C      struct {unsigned int DwellTime;unsigned int UsedMaterial;unsigned __int8 CartridgeID;unsigned __int8 Type;unsigned __int8 CmdVerify1;unsigned __int8 CmdVerify2;}   
+
+6825 ParamSet         00000088 Auto struct {char m_SetName[16];float m_Params[30];}                                                                                                                                                                                                                                                                                                                                                     
+6826 tagPrinterInfo   000005E4 Auto struct {float m_InfoVersion;int m_nSystemType;int m_NozzleNum;int m_HardwareVer;float m_SoftwareVer;int m_SystemSN;int m_nNozzleType;char m_SystemType[64];float m_MinX;float m_MaxX;float m_MinY;float m_MaxY;float m_MaxZ;float m_XScale;float m_YScale;float m_ZScale;float m_AScale;float m_XYScale;float m_ZXScale;float m_ZYScale;float m_ParamVer;int m_ParamSetNum;ParamSet m_ParamSet[10];}
+6827 MaterialHead     00000008 Auto struct {unsigned __int8 Type;unsigned __int8 SubType;unsigned __int8 Temp;unsigned __int8 Density;unsigned __int16 Weight;unsigned __int16 Data;}                                                                                                                                                                                                                                                   
+6828 UsageInfo        00000008      struct {int CurWeight;int UsedWeight;}                                                                                                                                                                                                                                                                                                                                                              
+6829 tagPrinterStatus 0000003F Auto struct __attribute__((packed)) __attribute__((aligned(1))) {char systemStatus;char printerStatus;__int16 curLayer;__int16 curHeight;unsigned int remainTime;__int16 temperature[4];char heaterOn;unsigned __int8 motorStatus[4];float motorPosition[4];unsigned int outPort;unsigned int inPort;unsigned int outPort_Slave;unsigned int inPort_Slave;int reserved1;int reserved2;}                  
+6830 tagPrintJob      0000003C Auto struct {char jobFlag;char layerThick;char fillMode;__attribute__((packed)) __attribute__((aligned(1))) __int16 totalTime;__attribute__((packed)) __attribute__((aligned(1))) __int16 totalMaterial;char saveTime[6];char jobName[32];char reversed[15];}                                                                                                                                            
+6831 tagMatrial       00000008      struct {unsigned __int8 nType;unsigned __int8 nTemp;unsigned __int8 nPlatTemp;char sName[5];}                                                                                                                                                                                                                                                                                                       
+6832 tagMaterials     0000003C      struct {int nTypes;MATDEF mat[7];}                                                                                                                                                                                                                                                                                                                                                                  
+
+
+6613 tag_echoInfo 00000080 Auto struct {unsigned int serNum1;unsigned int serNum2;int systemType;unsigned __int8 accessCtrl;unsigned __int8 workState;unsigned __int8 haveHost;TT_SOCKADDR_T udpAddr;char hostName[32];char printerName[32];char printerType[32];}
+6743 STRU_PrinterStatus 00000048 Auto struct {float m_fNozzleTemperature1;float m_fNozzleTemperature2;float m_fFlatTemperature;int m_nPrinterStatus;int m_nSystemStatus;unsigned __int8 m_nMotorStatusX;unsigned __int8 m_nMotorStatusY;unsigned __int8 m_nMotorStatusZ;unsigned __int8 m_nMotorStatusW;double m_dMotorPositionX;double m_dMotorPositionY;double m_dMotorPositionZ;double m_dMotorPositionW;int m_nCurLayer;float m_nCurHeight;int m_nRemainPercent;int m_nRemainTime;}
+
+
+0x200A GetMultiParam     ==> resp: 2003 2004 2005 2006 4002
+0x200D CommTest
+0x200D KeepAlive
+0x200E GetWifiResponse
+0x2010 GetWifiResponse
+
+
+//P_UP             = 0
+//P_UP_PLUS_2      = 1
+//P_UP_Plus_3      = 2
+//P_UP_MINI        = 3
+//P_UP_MINI2       = 4
+//P_UP_BOX_3D      = 5
+//P_UP_MARS        = 6

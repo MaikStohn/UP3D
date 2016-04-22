@@ -1,5 +1,5 @@
 /*
-  up3ddata.cpp for UP3DTranscoder
+  up3ddata.c for UP3DTranscoder
   M. Stohn 2016
 
   This is free software: you can redistribute it and/or modify
@@ -59,24 +59,15 @@ void UP3D_PROG_BLK_SetParameter( UP3D_BLK *pupblk, uint8_t parameter, int32_t va
   pupblk->pdat2.l=value;
 }
 
-void UP3D_PROG_BLK_Home( UP3D_BLK pupblks[2], UP3D_AXIS axis )
+void UP3D_PROG_BLK_Home( UP3D_BLK *pupblk, UP3D_AXIS axis, float direction, float offset, float speed )
 {
-  memset( pupblks, 0, sizeof(UP3D_BLK)*2 );
-  static const UP3D_BLK UP3D_PROG_BLK_HomeAxisX[2] ={ {.pcmd=UP3DPCMD_HomeAxis,.pdat1.l=UP3DAXIS_X,.pdat2.f=50.0,.pdat3.f=-4.0},
-                                                      {.pcmd=UP3DPCMD_HomeAxis,.pdat1.l=UP3DAXIS_X,.pdat2.f=10.0,.pdat3.f=-2.0}};
-  static const UP3D_BLK UP3D_PROG_BLK_HomeAxisY[2] ={ {.pcmd=UP3DPCMD_HomeAxis,.pdat1.l=UP3DAXIS_Y,.pdat2.f=50.0,.pdat3.f= 4.0},
-                                                      {.pcmd=UP3DPCMD_HomeAxis,.pdat1.l=UP3DAXIS_Y,.pdat2.f=10.0,.pdat3.f= 9.0}};
-  static const UP3D_BLK UP3D_PROG_BLK_HomeAxisZ[2] ={ {.pcmd=UP3DPCMD_HomeAxis,.pdat1.l=UP3DAXIS_Z,.pdat2.f=50.0,.pdat3.f=-6.0},
-                                                      {.pcmd=UP3DPCMD_HomeAxis,.pdat1.l=UP3DAXIS_Z,.pdat2.f= 3.0,.pdat3.f=-2.0}};
-  switch( axis )
-  {
-    case UP3DAXIS_X: memcpy( pupblks, UP3D_PROG_BLK_HomeAxisX, sizeof(UP3D_PROG_BLK_HomeAxisX) ); break;
-    case UP3DAXIS_Y: memcpy( pupblks, UP3D_PROG_BLK_HomeAxisY, sizeof(UP3D_PROG_BLK_HomeAxisY) ); break;
-    case UP3DAXIS_Z: memcpy( pupblks, UP3D_PROG_BLK_HomeAxisZ, sizeof(UP3D_PROG_BLK_HomeAxisZ) ); break;
-    default:
-      break;
-  }
+  memset( pupblk, 0, sizeof(UP3D_BLK) );
+  pupblk->pcmd=UP3DPCMD_HomeAxis; 
+  pupblk->pdat1.l=axis;
+  pupblk->pdat2.f=speed;
+  pupblk->pdat3.f=offset*direction;
 }
+
 void UP3D_PROG_BLK_MoveF( UP3D_BLK pupblks[2], float speedX, float posX, float speedY, float posY, float speedZ, float posZ, float speedA, float posA )
 {
   memset( pupblks, 0, sizeof(UP3D_BLK)*2 );

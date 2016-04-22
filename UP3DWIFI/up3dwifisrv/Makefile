@@ -2,25 +2,34 @@ CC ?= gcc
 RM ?= rm -rf
 
 CFLAGS += -Os -std=c99 -D_BSD_SOURCE
+#CFLAGS += -D_DEBUG_IN_OUT_
 CFLAGS += -I../../UP3DCOMMON/
 CFLAGS += $(shell pkg-config --cflags libusb-1.0)/..
 LDFLAGS += $(shell pkg-config --libs-only-other --libs-only-L libusb-1.0)
-LIBS += $(shell pkg-config --libs-only-l libusb-1.0)
+LIBS += $(shell pkg-config --libs-only-l libusb-1.0) -lpthread -lm
 
-SRCS= ../../UP3DCOMMON/up3d.c
-SRCS+=../../UP3DCOMMON/up3dcomm.c
-SRCS+=../../UP3DCOMMON/up3ddata.c
-SRCS+=up3dwifisrv.c
+SRCSSRV= ../../UP3DCOMMON/up3d.c
+SRCSSRV+=../../UP3DCOMMON/up3dcomm.c
+SRCSSRV+=../../UP3DCOMMON/up3ddata.c
+SRCSSRV+=up3dwifisrv.c
+OBJSSRV=$(subst .c,.o,$(SRCSSRV))
 
-OBJS=$(subst .c,.o,$(SRCS))
+SRCSLGO= up3dwifioled.c
+SRCSLGO+=up3dwifilogo.c
+OBJSLGO=$(subst .c,.o,$(SRCSLGO))
 
-all: up3dwifi
+all: up3dwifi up3dlogo
 
-up3dwifi: $(OBJS)
-	$(CC) $(CFLAGS) $(LDFLAGS) -o up3dwifisrv $(OBJS) $(LIBS)
+up3dwifi: $(OBJSSRV)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o up3dwifisrv $(OBJSSRV) $(LIBS)
+
+up3dlogo: $(OBJSLGO)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o up3dwifilogo $(OBJSLGO) $(LIBS)
 
 clean:
-	$(RM) $(OBJS)
+	$(RM) $(OBJSSRV)
 	$(RM) up3dwifisrv
+	$(RM) $(OBJSLGO)
+	$(RM) up3dwifilogo
 
 dist-clean: clean

@@ -34,10 +34,13 @@ endef
 define Package/up3dwifi/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_BUILD_DIR)/UP3DWIFI/up3dwifisrv/up3dwifisrv $(1)/usr/bin/
+#	$(INSTALL_BIN) $(PKG_BUILD_DIR)/UP3DWIFI/up3dwifisrv/up3dwifilogo $(1)/usr/bin/
 	$(INSTALL_DIR) $(1)/etc/hotplug.d/usb
 	$(INSTALL_DATA) ./up3dwifi.hotplug $(1)/etc/hotplug.d/usb/11-up3dwifi
-	$(INSTALL_DATA) ./up3dwifi.initd $(1)/etc/init.d/up3dwifilogo
-	$(INSTALL_DATA) ./up3dwifi.modulesd $(1)/etc/modules.d/i2c-gpio-custom
+#	$(INSTALL_DIR) $(1)/etc/init.d
+#	$(INSTALL_BIN) ./up3dwifi.initd $(1)/etc/init.d/up3dwifilogo
+#	$(INSTALL_DIR) $(1)/etc/modules.d
+#	$(INSTALL_DATA) ./up3dwifi.modulesd $(1)/etc/modules.d/i2c-gpio-custom
 endef
 
 $(eval $(call BuildPackage,up3dwifi))

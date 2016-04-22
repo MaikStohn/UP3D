@@ -21,6 +21,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "compat.h"
 
 static char UP3D_STR_MACHINE_STATE[][32] = {"System Error","Jogging","Running Program","Idle","Unknown Status","<UNK>"};
 
@@ -40,16 +41,22 @@ static char UP3D_STR_AXIS_STATE[][32]    = {"No Error","+Limit Error","-Limit Er
 typedef enum UP3D_PROG_CMD {
 //UP3DPCMD_0 ?
   UP3DPCMD_Stop         = 0x00000001,
-  UP3DPCMD_SetState     = 0x00000002,
-  UP3DPCMD_MoveF        = 0x00000003,
-  UP3DPCMD_MoveL        = 0x00000004,
-  UP3DPCMD_Pause        = 0x00000005,
-  UP3DPCMD_SetParameter = 0x00000006,
-  UP3DPCMD_WaitIfNot    = 0x00000007,
-  UP3DPCMD_HomeAxis     = 0x00000008,
-  UP3DPCMD_IfNotThenJmp = 0x00000009,
+  UP3DPCMD_SetState     = 0x00000002,  
+  UP3DPCMD_MoveF        = 0x00000003,  //JOGCMD       Speed,Pos,Speed,Pos
+  UP3DPCMD_MoveL        = 0x00000004,  //MOVECMD      SegNum,SegPeriod,XSpeed,YSpeed,ASpeed,XAcc,YAcc,AAcc
+  UP3DPCMD_Pause        = 0x00000005,  //WAITCMD      Var, Val, Mode
+  UP3DPCMD_SetParameter = 0x00000006,  //SYSVARCMD    Var, Val
+  UP3DPCMD_WaitIfNot    = 0x00000007,  
+  UP3DPCMD_HomeAxis     = 0x00000008,  //HOMECMD      MotorID, HSpeed, HOffDis
+  UP3DPCMD_IfNotThenJmp = 0x00000009,  //IFCMD        Var, Val, Mode, Jumpline
 //UP3DPCMD_A Change Nozzle ?? (1x LONG 0x05/0x0C/0x0D)
-  UP3DPCMD_AddToParam   = 0x0000000B,
+  UP3DPCMD_AddToParam   = 0x0000000B,  //SYSVARADDCMD Var,Val
+
+  //IOCMD        Port,Status
+  //COPYRIGHTCMD DwellTime,SerialID,LicenseCount(8),bCountDown(8),CmdVerify1(8),CmdVerify2(8)
+  //MATERIALCMD  DwellTime,UsedMaterial,CartridgeID,Type(8),CmdVerify1(8),CmdVerify2(8)
+  //FLASHVARCMD  type(8),var(8),res1(8),res2(8),val,jumpline
+  
 } UP3D_PROG_CMD;
 
 typedef enum UP3D_PROG_CMD_SETSTATE_STATE {
@@ -104,34 +111,34 @@ typedef struct UP3D_BLK {
 } UP3D_BLK;
 
 typedef struct TT_tagPrinterInfoHeader {
-  float    flt_unk1;              //1.0
-  uint32_t u32_printerid;         //00002777 => UP Mini(M)
-  uint32_t u32_unk3;              //1
-  uint32_t u32_unk4;              //102
-  float    f_rom_version;         //6.1
-  uint32_t u32_printerserial;     //208460
-  uint32_t u32_unk7;              //100
+  float    flt_unk1;              //1.0                       (info version)
+  uint32_t u32_printerid;         //00002777 => UP Mini(M)    (system type)
+  uint32_t u32_unk3;              //1                         (nozzle num)
+  uint32_t u32_unk4;              //102                       (hardware ver)
+  float    f_rom_version;         //6.1                       (software ver)
+  uint32_t u32_printerserial;     //208460                    (system sn)
+  uint32_t u32_unk7;              //100                       (nozzle type)
 } TT_tagPrinterInfoHeader;
 
 typedef struct TT_tagPrinterInfoName {
-  char printer_name[63];          //UpMini
+  char printer_name[63];          //UpMini                    (system type (char))
 } TT_tagPrinterInfoName;
 
 typedef struct TT_tagPrinterInfoData {
-  float    f_max_x;               //-120.0  maxX and direction
-  float    flt_unk2;              //0.0
-  float    flt_unk3;              //0.0
-  float    f_max_y;               //120.0   maxY and direction
-  float    f_max_z;               //130.0   maxZ and direction
-  float    f_steps_mm_x;          //850.0   X steps/mm
-  float    f_steps_mm_y;          //850.0   Y steps/mm
-  float    f_steps_mm_z;          //850.0   Z steps/mm
-  float    f_unknown_a;           //40.0    A? some factor? BUT in reality is 854.0 steps/mm
-  float    flt_unk10;             //0.0
-  float    flt_unk11;             //0.0
-  float    flt_unk12;             //0.0
-  float    flt_unk13;             //1.0
-  uint32_t u32_NumSets;           //4
+  float    f_max_x;               //-120.0  maxX and direction (minX)
+  float    flt_unk2;              //0.0                        (maxX)
+  float    flt_unk3;              //0.0                        (minY)
+  float    f_max_y;               //120.0   maxY and direction (maxY)
+  float    f_max_z;               //130.0   maxZ and direction (maxZ)
+  float    f_steps_mm_x;          //854.0   X steps/mm         (xscale)
+  float    f_steps_mm_y;          //854.0   Y steps/mm         (yscale)
+  float    f_steps_mm_z;          //854.0   Z steps/mm         (zscale)
+  float    f_unknown_a;           //40.0    A? some factor?    (ascale)             BUT in reality is 854.0 steps/mm
+  float    flt_unk10;             //0.0                        (xyscale)
+  float    flt_unk11;             //0.0                        (zxscale)
+  float    flt_unk12;             //0.0                        (zyscale)
+  float    flt_unk13;             //1.0                        (paramver)
+  uint32_t u32_NumSets;           //4                          (paramsetnum)
 } TT_tagPrinterInfoData;
 
 typedef struct TT_tagPrinterInfoSet {
@@ -181,12 +188,35 @@ typedef struct TT_tagPrinterStatus {
   uint8_t  HeaterStatus;
   uint8_t  AxisStatus[4];
   float    AxisPosition[4];
-  uint32_t Para_x5E;
-  uint32_t Para_x5F;
-  uint32_t Para_x56;
-  uint32_t Para_x57;
-  int64_t  UnkMinusOne;
+  uint32_t Para_x5E; //outport
+  uint32_t Para_x5F; //inport
+  uint32_t Para_x56; //outport slave
+  uint32_t Para_x57; //inport  slave
+  int64_t  UnkMinusOne;  //2x32 reserved1/reserved2
 } TT_tagPrinterStatus;
+
+typedef struct UP3D_WIFI_HDR {
+  uint16_t u16Marker;   //0xF0F0
+  uint8_t  u8Reserved0; //0x00
+  uint16_t u16Cmd;      //0x1001 (scan) 0x1002 (connect)   0x4001 (response1) 0x4002 (response2)
+  uint16_t u16DataLen;
+  uint16_t u16Reserved1;
+} UP3D_WIFI_HDR;
+
+typedef struct TT_tagEchoInfo {
+  uint32_t serNum1;
+  uint32_t serNum2;
+  uint32_t systemType;
+  uint8_t  accessCtrl;
+  uint8_t  workState;
+  uint8_t  haveHost;
+  uint8_t  reserved;
+  struct sockaddr_in udpAddr;
+  char hostName[32];
+  char printerName[32];
+  char printerType[32];
+} TT_tagEchoInfo;
+
 #pragma pack()
 
 typedef enum PARA {
@@ -318,7 +348,7 @@ void UP3D_PROG_BLK_Power( UP3D_BLK *pupblk, bool on );
 void UP3D_PROG_BLK_Beeper( UP3D_BLK *pupblk, bool on );
 void UP3D_PROG_BLK_Pause( UP3D_BLK *pupblk, uint32_t msec );
 void UP3D_PROG_BLK_SetParameter( UP3D_BLK *pupblk, uint8_t parameter, int32_t value );
-void UP3D_PROG_BLK_Home( UP3D_BLK pupblks[2], UP3D_AXIS axis );
+void UP3D_PROG_BLK_Home( UP3D_BLK pupblks[2], UP3D_AXIS axis, float direction, float offset, float speed );
 void UP3D_PROG_BLK_MoveF( UP3D_BLK pupblks[2], float speedX, float posX, float speedY, float posY, float speedZ, float posZ, float speedA, float posA );
 void UP3D_PROG_BLK_MoveL( UP3D_BLK *pupblk, short p1, short p2, short p3, short p4, short p5, short p6, short p7, short p8);
 void UP3D_PROG_BLK_WaitIfNot( UP3D_BLK *pupblk, uint8_t parameter, int32_t value, char compchar );
