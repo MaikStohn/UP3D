@@ -106,7 +106,7 @@ static void update_state(bool redrawall)
   static int32_t old_tr = 0;
   static struct timeval tval_old;
   int32_t tr = UP3D_GetTimeRemaining();
-  if( old_tr == tr )
+  if( (old_tr == tr) && (tr>0) )
   {
     struct timeval tval_now, tval_diff;
     gettimeofday(&tval_now, NULL);
