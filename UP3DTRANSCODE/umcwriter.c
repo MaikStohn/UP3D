@@ -382,20 +382,13 @@ void umcwriter_set_bed_temp(int32_t temp, bool wait)
     UP3D_PROG_BLK_SetParameter(&blk,PARA_RED_BLUE_BLINK,400);
     _umcwriter_write_file(&blk, 1);
 
-#ifdef X_WAIT_HEATBED_FACTOR
-    //TODO: better wait... idea: move nozzle to bed and use thermistor of nozzle
-    if(temp>50)
-    {
-      umcwriter_pause(temp/10*60*1000); //wait 5,6,7,8,9,10 (50,60,70,80,90C) minutes
-      umcwriter_print_time += temp/10*60;
-    }
-#else
-    umcwriter_pause(3*60*1000); //wait 3 minute
-    umcwriter_print_time += 3*60;
-#endif
+    uint32_t waitsec = (temp/settings.heatbed_wait_factor)*60; 
+    umcwriter_pause(waitsec);
 
     UP3D_PROG_BLK_SetParameter(&blk,PARA_RED_BLUE_BLINK,200);
     _umcwriter_write_file(&blk, 1);
+
+    umcwriter_set_report_data(-1,-1);
   }
 }
 

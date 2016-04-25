@@ -33,26 +33,6 @@
 #define Y_AXIS 1
 #define A_AXIS 2
 
-/* real values are in up3dconf.c for each machine
-#define DEFAULT_X_STEPS_PER_MM ( 854.0 * 512) // *512 for internal fraction representation in printer
-#define DEFAULT_Y_STEPS_PER_MM ( 854.0 * 512)
-#define DEFAULT_A_STEPS_PER_MM ( 854.0 * 512) // ??? 40.0*512
-
-#define DEFAULT_X_MAX_RATE (200.0)    // mm/sec
-#define DEFAULT_Y_MAX_RATE (200.0)    // mm/sec
-#define DEFAULT_A_MAX_RATE (50.0)     // mm/sec
-
-#define DEFAULT_X_ACCELERATION (3000) // mm/sec^2
-#define DEFAULT_Y_ACCELERATION (3000) // mm/sec^2
-#define DEFAULT_A_ACCELERATION (300)  // mm/sec^2
-
-#define DEFAULT_X_MAX_TRAVEL 122.0       // mm
-#define DEFAULT_Y_MAX_TRAVEL 122.0       // mm
-#define DEFAULT_A_MAX_TRAVEL 100000000.0 // mm
-
-#define DEFAULT_JUNCTION_DEVIATION 0.01  // mm
-*/
-
 //global settings
 typedef struct {
   // Axis settings
@@ -78,6 +58,7 @@ typedef struct {
   double x_hofs_lo;
   double y_hofs_lo;
   double z_hofs_lo;
+  double heatbed_wait_factor;
 } settings_t;
 
 extern settings_t settings;
