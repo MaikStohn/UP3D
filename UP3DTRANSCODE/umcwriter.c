@@ -178,7 +178,7 @@ void umcwriter_home(int32_t axes)
   double pos[3];
   plan_get_position(pos);
 
-  umcwriter_print_time += 7; //apx. 7 seconds for homing
+  umcwriter_print_time += 3; //apx. 3 seconds for homing of one axis
   
   UP3D_BLK blk;
   
@@ -364,6 +364,8 @@ void umcwriter_set_extruder_temp(double temp, bool wait)
 
     UP3D_PROG_BLK_SetParameter(&blk,PARA_RED_BLUE_BLINK,200);
     _umcwriter_write_file(&blk, 1);
+
+    umcwriter_set_report_data(-1,-1);
   }
 }
 
@@ -398,17 +400,24 @@ void umcwriter_set_report_data(int32_t layer, double height)
   int32_t seconds_remaining = umcwriter_print_time_max - umcwriter_print_time;
 
   UP3D_BLK blk;
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_LAYER,layer);
-  _umcwriter_write_file(&blk, 1);
-  float h = (float)height;
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_HEIGHT,*((int32_t*)&h));
-  _umcwriter_write_file(&blk, 1);
+  if( layer>=0 )
+  {
+    UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_LAYER,layer);
+    _umcwriter_write_file(&blk, 1);
+  }
+  if( height>=0 )
+  {
+    float h = (float)height;
+    UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_HEIGHT,*((int32_t*)&h));
+    _umcwriter_write_file(&blk, 1);
+  }
+  
   UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_PERCENT,percent);
   _umcwriter_write_file(&blk, 1);
   UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_TIME_REMAIN,seconds_remaining);
   _umcwriter_write_file(&blk, 1);
 }
- 
+
 void umcwriter_pause(uint32_t msec)
 {
   umcwriter_planner_sync();
@@ -427,8 +436,9 @@ void umcwriter_beep(uint32_t msec)
   UP3D_BLK blk;
   UP3D_PROG_BLK_Beeper(&blk,true);
   _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_Pause(&blk,msec);
-  _umcwriter_write_file(&blk, 1);
+
+  umcwriter_pause(msec);
+
   UP3D_PROG_BLK_Beeper(&blk,false);
   _umcwriter_write_file(&blk, 1);
 }
