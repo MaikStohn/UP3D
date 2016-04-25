@@ -33,7 +33,7 @@ $STRIP up3dtranscode
 
 elif [[ "$OSTYPE" == "linux-gnu" ]]; then
 
-$CC -std=c99 -Os \
+$CC -std=c99 -O2 \
     -I../UP3DCOMMON \
     -o up3dtranscode up3dconf.c hoststepper.c hostplanner.c gcodeparser.c ../UP3DCOMMON/up3ddata.c umcwriter.c up3dtranscode.c -lm
 
