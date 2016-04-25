@@ -82,11 +82,6 @@ bool umcwriter_init(const char* filename, double heightZ, double printTimeMax)
   _umcwriter_write_file(&blk, 1);
 
 
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_LAYER,0);  //layer 0
-  _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_HEIGHT,0); //height 0
-  _umcwriter_write_file(&blk, 1);
-
   //home all axis (needed for correct print status
   umcwriter_home(0);
   umcwriter_home(1);
