@@ -48,7 +48,10 @@ bool umcwriter_init(const char* filename, double heightZ, double printTimeMax)
   umcwriter_Z_height = heightZ;
   umcwriter_print_time = 0;
   umcwriter_print_time_max = printTimeMax?printTimeMax:1;
-  
+
+  st_reset();
+  plan_reset();
+
   umcwriter_file = NULL;
   if( filename )
   {
@@ -65,15 +68,11 @@ bool umcwriter_init(const char* filename, double heightZ, double printTimeMax)
 
   umcwriter_pause(4000); //wait for power on complete and temperature measurement to stabilize
 
-  st_reset();
-  plan_reset();
-
-//TODO: move...?
-  UP3D_PROG_BLK_SetParameter(&blk,0x41,267);              //? TEMP FOR NOZZLE1 TEMP REACHED
+  UP3D_PROG_BLK_SetParameter(&blk,0x41,0);              //TEMP FOR NOZZLE1 TEMP REACHED
   _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,0x42,242);              //? TEMP FOR NOZZLE2 TEMP REACHED
+  UP3D_PROG_BLK_SetParameter(&blk,0x42,0);              //TEMP FOR NOZZLE2 TEMP REACHED
   _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,0x43,104);              //? TEMP FOR BED TEMP REACHED
+  UP3D_PROG_BLK_SetParameter(&blk,0x43,0);              //TEMP FOR BED TEMP REACHED
   _umcwriter_write_file(&blk, 1);
 
 // NEEDED?
@@ -347,6 +346,12 @@ void umcwriter_set_extruder_temp(double temp, bool wait)
     _umcwriter_write_file(&blk, 1);
   }
 
+  if( temp )
+  {
+    UP3D_PROG_BLK_SetParameter(&blk,0x41,temp);          //TEMP FOR NOZZLE1_TEMP_REACHED
+    _umcwriter_write_file(&blk, 1);
+  }
+
   UP3D_PROG_BLK_SetParameter(&blk,PARA_NOZZLE1_TEMP,temp);
   _umcwriter_write_file(&blk, 1);
   UP3D_PROG_BLK_SetParameter(&blk,PARA_HEATER_NOZZLE1_ON,(temp)?1:0);
@@ -374,6 +379,13 @@ void umcwriter_set_bed_temp(int32_t temp, bool wait)
   umcwriter_planner_sync();
 
   UP3D_BLK blk;
+ 
+  if( temp )
+  {
+    UP3D_PROG_BLK_SetParameter(&blk,0x43,temp); //TEMP FOR BED_TEMP_REACHED
+   _umcwriter_write_file(&blk, 1);
+  }
+
   UP3D_PROG_BLK_SetParameter(&blk,PARA_BED_TEMP,temp);
   _umcwriter_write_file(&blk, 1);
   UP3D_PROG_BLK_SetParameter(&blk,PARA_HEATER_BED_ON,(temp)?1:0);
