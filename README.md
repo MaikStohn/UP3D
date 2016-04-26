@@ -12,26 +12,29 @@ Instructions: [up3dtools-how-to](http://stohn.de/3d/index.php/2016/03/10/up3dtoo
 ## up3dtranscode: 
 
 G-Code to UpMachineCode (UMC) converter
+```
+Usage: up3dtranscode machinetype input.gcode output.umc nozzleheight
 
-usage: up3dtranscode input.gcode output.umc
+          machinetype:  mini / classic / plus / box
+          input.gcode:  g-code file from slic3r/cura/simplify
+          output.umc:   up machine code file which will be generated
+          nozzleheight: nozzle distance from bed (e.g. 123.45)
 
-or with nozzle height added as last parameter
-
-usage: up3dtranscode mini input.gcode output.umc 123.1
-
+example: up3dtranscode mini input.gcode output.umc 123.1
+```
 ---
 
 ## upload: 
 
 UpMachineCode (UMC) uploader, sends the umc file to printer and starts a print
-
-usage: upload output.umc
-
+```
+Usage: upload output.umc
+```
 ---
 
 ## upshell: 
 
 Interactive printer monitor and debugging tool, use to watch printing
-
-usage: upshell
-
+```
+Usage: upshell
+```
