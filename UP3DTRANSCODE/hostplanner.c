@@ -299,7 +299,12 @@ void plan_buffer_line(double *target, double feed_rate, bool invert_feed_rate)
     block->millimeters += delta_mm*delta_mm;
   }
   block->millimeters = sqrt(block->millimeters); // Complete millimeters calculation with sqrt()
-  
+
+  //-->MS
+  for (idx=0; idx<N_AXIS; idx++)
+    block->factor[idx] = block->steps[idx]/block->millimeters*((block->direction_bits&get_direction_pin_mask(idx))?-1:1);
+  //<--MS
+
   // Bail if this is a zero-length block. Highly unlikely to occur.
   if (block->step_event_count == 0) { return; } 
   

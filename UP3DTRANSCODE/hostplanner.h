@@ -58,6 +58,10 @@ typedef struct {
 
  // int32_t line_number;
 
+//-->MS
+  double factor[N_AXIS];
+//<--MS
+
 } plan_block_t;
 
       
