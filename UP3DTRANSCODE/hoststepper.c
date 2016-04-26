@@ -36,9 +36,6 @@
 #include <math.h>
 #include <stdlib.h>
 
-//DEBUG
-#include <stdio.h>
-
 // Some useful constants.
 #define DT_SEGMENT (1.0/(ACCELERATION_TICKS_PER_SECOND*60.0)) // min/segment
 #define REQ_MM_INCREMENT_SCALAR 1.25
@@ -119,7 +116,7 @@ static st_prep_t prep;
 */
 
 //MS-->
-static int32_t g_ex,g_ey,g_ea;
+static int64_t g_ex,g_ey,g_ea;
 
 bool st_get_next_segment_up3d(segment_up3d_t** ppseg)
 {
@@ -142,124 +139,100 @@ bool st_get_next_segment_up3d(segment_up3d_t** ppseg)
 
 void st_create_segment_up3d(double t, double v_entry, double v_exit)
 {
-//  printf("B: (t:%f ve:%f vx:%f: \n",t,v_entry,v_exit );
+  double vm = max(300,min(6000,max(v_entry,v_exit))); //6000*8 => 48000 max, 300*8 => 2400 min, ?maybe this can be a bit smaller?
+  int64_t p1 = (uint64_t)(t*vm*8+1);
+  int64_t p2;
 
-  //calculate the factors of the axis (we do linear moves)
-  double fx = pl_block->steps[X_AXIS]/(pl_block->millimeters)*((pl_block->direction_bits&(1<<X_AXIS))?-1:1);
-  double fy = pl_block->steps[Y_AXIS]/(pl_block->millimeters)*((pl_block->direction_bits&(1<<Y_AXIS))?-1:1);
-  double fa = pl_block->steps[A_AXIS]/(pl_block->millimeters)*((pl_block->direction_bits&(1<<A_AXIS))?-1:1);
-
-  double vm = max(100,min(600,max(v_entry,v_exit))); //600 => 8000 max, 100 => 1500 min, ???can be smaller ?
-
-  int64_t p1 = (uint32_t)(t*vm*15+1);
-/*
-
- //TODO: SCALE p1 smoothly based on v: e.g. v/100
- // V=1    1000
- // V=10   1000
- // V=50   2000
- // V=100  2000
- // V=200
- // V=300
- // V=700  8000
-
-  int64_t p1 = (uint32_t)(t*2000+1);
-  if( (v_entry>100) || (v_exit>100) )
-    p1 = (uint32_t)(t*8000+1);
-*/
-  //if( 0 == p1 ) p1 = 1;
-  if( p1>65535 ) p1 = 65535; //ERROR !!!
-
-  //uint32_t p2 = (((int32_t)(t*F_CPU/p1)+25)/50)*50;
-  int64_t p2 = (uint32_t)(t*F_CPU/p1);
-  if( p2<100 ) p2 = 100;     //TODO: CHECK THIS ==> ERROR ?
-  if( p2>65535) p2 = 65535;
-
-//  printf("ST: %d, P1: %lld P2: %lld\n",t_scale,p1,p2 );
-
-  double linear_x = v_entry*t*fx;
-  double linear_y = v_entry*t*fy;
-  double linear_a = v_entry*t*fa;
-
-  double acceld_x = (v_exit-v_entry)*t*fx;
-  double acceld_y = (v_exit-v_entry)*t*fy;
-  double acceld_a = (v_exit-v_entry)*t*fa;
-
-//TODO: CHECK maybe here the floor() is needed
-  int64_t p3 = (int16_t)(linear_x/p1);
-  int64_t p4 = (int16_t)(linear_y/p1);
-  int64_t p5 = (int16_t)(linear_a/p1);
-
-  int64_t p6 = (int16_t)(acceld_x/(p1*p1));
-  int64_t p7 = (int16_t)(acceld_y/(p1*p1));
-  int64_t p8 = (int16_t)(acceld_a/(p1*p1));
-
-  if( v_entry != v_exit )
+  for(;;)
   {
-    //acceleration ==> needs correction of v_entry ==> linear dist !
-    p3 += (int32_t)((acceld_x/2-(int64_t)p6*p1*p1/2)/p1);
-    p4 += (int32_t)((acceld_y/2-(int64_t)p7*p1*p1/2)/p1);
-    p5 += (int32_t)((acceld_a/2-(int64_t)p8*p1*p1/2)/p1);
-  }
-
-  //calculate xsteps generated like mcu in printer (THERE IS A BAD *FLOOR* ROUNDING INSIDE!)
-  int32_t sx = floor((float)((p3*p1+p6*p1*p1/2))/512)*512;
-  int32_t sy = floor((float)((p4*p1+p7*p1*p1/2))/512)*512;
-  int32_t sa = floor((float)((p5*p1+p8*p1*p1/2))/512)*512;
-
-//printf("sx:%8d sy:%8d sa:%8d\n",sx,sy,sa);
-
-  //calculate mcu rounding error compared to real xsteps required
-  g_ex += linear_x + acceld_x/2 - sx;
-  g_ey += linear_y + acceld_y/2 - sy;
-  g_ea += linear_a + acceld_a/2 - sa;
-
-/*
-  //if is an accell/decel we can compensate rounding errors by adding it to initial speed value
-  if( p6 ) {int32_t ex = g_ex/p1; p3 += ex; g_ex-=ex*p1;}
-  if( p7 ) {int32_t ey = g_ey/p1; p4 += ey; g_ey-=ey*p1;}
-  if( p8 ) {int32_t ea = g_ea/p1; p5 += ea; g_ea-=ea*p1;}
-*/
-  //TODO: CHECK OVERFLOW, check FLOOR
-  //always compensate rounding errors by adding it to initial speed values
-  int32_t ex = g_ex/p1; p3 += ex; g_ex-=ex*p1;
-  int32_t ey = g_ey/p1; p4 += ey; g_ey-=ey*p1;
-  int32_t ea = g_ea/p1; p5 += ea; g_ea-=ea*p1;
-
-  // add new segment
-  segment_up3d_t *seg = &segment_buffer[segment_buffer_head];
-  seg->p1 = p1; seg->p2 = p2; seg->p3 = p3; seg->p4 = p4; seg->p5 = p5; seg->p6 = p6; seg->p7 = p7; seg->p8 = p8;
-
-  // increment segment buffer indices
-  segment_buffer_head = segment_next_head;
-  if ( ++segment_next_head == SEGMENT_BUFFER_SIZE ) { segment_next_head = 0; }
-
-//printf("g_ex:%d g_ey:%d g_ea:%d\n",g_ex,g_ey,g_ea);
-
-#ifdef X_INSERT_STEP_CORRECTIONS
-  //check if mcu rounding error is big enough to issue fast steps to compensate 
-//  //we do this only after accel or decel ==> linear moves compensated at begin / end of segment
-//  if( (p6 || p7 || p8) && ((abs(g_ex)>511) || (abs(g_ey)>511) || (abs(g_ea)>511)) )
-  if( (abs(g_ex)>511) || (abs(g_ey)>511) || (abs(g_ea)>511) )
-  {
-//printf("XSTEP: -->%d:%d:%d ",g_ex,g_ey,g_ea);
-
-    // add missing steps to a "tiny segment, fast" new segment with almost no time
+    p2 = (int64_t)(t*F_CPU/p1);
+    
+    //minimum timer value is 100
+    if( p2<100 )
+      p2=100;
+    //maximum value is 65535
+    if( p2>65535)
+    {
+      p1++;
+      continue;
+    }
+    
+    double linear_x = v_entry*t*pl_block->factor[X_AXIS];
+    double linear_y = v_entry*t*pl_block->factor[Y_AXIS];
+    double linear_a = v_entry*t*pl_block->factor[A_AXIS];
+    
+    double acceld_x = (v_exit-v_entry)*t*pl_block->factor[X_AXIS];
+    double acceld_y = (v_exit-v_entry)*t*pl_block->factor[Y_AXIS];
+    double acceld_a = (v_exit-v_entry)*t*pl_block->factor[A_AXIS];
+    
+    int64_t p3 = (int64_t)(linear_x/p1);
+    int64_t p4 = (int64_t)(linear_y/p1);
+    int64_t p5 = (int64_t)(linear_a/p1);
+    
+    int64_t p6 = (int64_t)(acceld_x/(p1*p1));
+    int64_t p7 = (int64_t)(acceld_y/(p1*p1));
+    int64_t p8 = (int64_t)(acceld_a/(p1*p1));
+    
+    if( v_entry != v_exit )
+    {
+      //acceleration ==> needs correction of v_entry ==> linear dist !
+      p3 += (int64_t)((acceld_x/2-p6*p1*p1/2)/p1);
+      p4 += (int64_t)((acceld_y/2-p7*p1*p1/2)/p1);
+      p5 += (int64_t)((acceld_a/2-p8*p1*p1/2)/p1);
+    }
+    
+    if( (p3<-32767) || (p3>32767) || (p4<-32767) || (p4>32767) || (p5<-32767) || (p5>32767) ||
+       (p6<-32767) || (p6>32767) || (p7<-32767) || (p7>32767) || (p8<-32767) || (p8>32767) )
+    {
+      //test format limits, increase segment steps if overfolow
+      p1++;
+      continue;
+    }
+    
+    //calculate xsteps generated like mcu in printer (THERE IS A BAD *FLOOR* ROUNDING INSIDE!)
+    int64_t sx = floor((float)((p3*p1+p6*p1*p1/2))/512)*512;
+    int64_t sy = floor((float)((p4*p1+p7*p1*p1/2))/512)*512;
+    int64_t sa = floor((float)((p5*p1+p8*p1*p1/2))/512)*512;
+    
+    //calculate mcu rounding error compared to real xsteps required
+    g_ex += linear_x + acceld_x/2 - sx;
+    g_ey += linear_y + acceld_y/2 - sy;
+    g_ea += linear_a + acceld_a/2 - sa;
+    
+    //compensate rounding errors by adding it to initial speed values
+    int64_t ex = g_ex/p1; if((p3+ex)>32767){ex=32767-p3;} if((p3+ex)<-32767){ex=-32767-p3;} p3+=ex; g_ex-=ex*p1;
+    int64_t ey = g_ey/p1; if((p4+ey)>32767){ey=32767-p4;} if((p4+ey)<-32767){ey=-32767-p4;} p4+=ey; g_ey-=ey*p1;
+    int64_t ea = g_ea/p1; if((p5+ea)>32767){ea=32767-p5;} if((p5+ea)<-32767){ea=-32767-p5;} p5+=ea; g_ea-=ea*p1;
+    
+    // add new segment
     segment_up3d_t *seg = &segment_buffer[segment_buffer_head];
-    seg->p1 = 1; seg->p2 = 100; 
-    if( abs(g_ex)>511 ) {seg->p3 = (g_ex/512)*512; g_ex-=seg->p3;} else seg->p3=0;
-    if( abs(g_ey)>511 ) {seg->p4 = (g_ey/512)*512; g_ey-=seg->p4;} else seg->p4=0;
-    if( abs(g_ea)>511 ) {seg->p5 = (g_ea/512)*512; g_ea-=seg->p5;} else seg->p5=0; 
-    seg->p6 = 0; seg->p7 = 0; seg->p8 = 0;
-
-//printf("%d:%d:%d\n",seg->p3,seg->p4,seg->p5);
-
+    seg->p1 = p1; seg->p2 = p2; seg->p3 = p3; seg->p4 = p4; seg->p5 = p5; seg->p6 = p6; seg->p7 = p7; seg->p8 = p8;
+    
     // increment segment buffer indices
     segment_buffer_head = segment_next_head;
     if ( ++segment_next_head == SEGMENT_BUFFER_SIZE ) { segment_next_head = 0; }
-  }
+    
+#ifdef X_INSERT_STEP_CORRECTIONS
+    //check if mcu rounding error is big enough to issue fast steps to compensate
+    if( (abs(g_ex)>511) || (abs(g_ey)>511) || (abs(g_ea)>511) )
+    {
+      // add missing steps to a "tiny segment, fast" new segment with almost no time
+      segment_up3d_t *seg = &segment_buffer[segment_buffer_head];
+      seg->p1 = 1; seg->p2 = 100;
+      if( abs(g_ex)>511 ) {seg->p3 = (g_ex/512)*512; g_ex-=seg->p3;} else seg->p3=0;
+      if( abs(g_ey)>511 ) {seg->p4 = (g_ey/512)*512; g_ey-=seg->p4;} else seg->p4=0;
+      if( abs(g_ea)>511 ) {seg->p5 = (g_ea/512)*512; g_ea-=seg->p5;} else seg->p5=0;
+      seg->p6 = 0; seg->p7 = 0; seg->p8 = 0;
+      
+      // increment segment buffer indices
+      segment_buffer_head = segment_next_head;
+      if ( ++segment_next_head == SEGMENT_BUFFER_SIZE ) { segment_next_head = 0; }
+    }
 #endif 
 
+    //always leave
+    break;
+  }
 }
 //MS<--
 
@@ -398,7 +371,10 @@ void st_prep_buffer()
     if (minimum_mm < 0.0) { minimum_mm = 0.0; }
 
     do {
-
+      //MS-->
+      time_var = dt_max; //restart a new segment time with each iteration
+      //<--MS
+      
       switch (prep.ramp_type) {
         case RAMP_ACCEL: 
           // NOTE: Acceleration ramp only computes during first do-while loop.

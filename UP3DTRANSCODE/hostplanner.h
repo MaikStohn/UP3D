@@ -34,7 +34,7 @@
 
 // The number of linear motions that can be in the plan at any give time
 #ifndef BLOCK_BUFFER_SIZE
-  #define BLOCK_BUFFER_SIZE 1024
+  #define BLOCK_BUFFER_SIZE 8192
 #endif
 
 // This struct stores a linear movement of a g-code block motion with its critical "nominal" values
@@ -57,6 +57,10 @@ typedef struct {
   // uint8_t max_override;       // Maximum override value based on axis speed limits
 
  // int32_t line_number;
+
+//-->MS
+  double factor[N_AXIS];
+//<--MS
 
 } plan_block_t;
 

@@ -22,7 +22,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-bool    umcwriter_init(const char* filename, double heightZ, double printTimeMax);
+bool    umcwriter_init(const char* filename, const double heightZ, const char machine_type);
 void    umcwriter_finish();
 int32_t umcwriter_get_print_time();
 void    umcwriter_home(int32_t axes);

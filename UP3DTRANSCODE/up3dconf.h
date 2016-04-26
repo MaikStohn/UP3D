@@ -25,33 +25,12 @@
 #define F_CPU 50000000
 
 //#define X_INSERT_STEP_CORRECTIONS
-//#define X_WAIT_HEATBED_FACTOR
 
 #define N_AXIS 3 // Number of axes (X,Y,A)
 
 #define X_AXIS 0 // Axis indexing value. 
 #define Y_AXIS 1
 #define A_AXIS 2
-
-/* real values are in up3dconf.c for each machine
-#define DEFAULT_X_STEPS_PER_MM ( 854.0 * 512) // *512 for internal fraction representation in printer
-#define DEFAULT_Y_STEPS_PER_MM ( 854.0 * 512)
-#define DEFAULT_A_STEPS_PER_MM ( 854.0 * 512) // ??? 40.0*512
-
-#define DEFAULT_X_MAX_RATE (200.0)    // mm/sec
-#define DEFAULT_Y_MAX_RATE (200.0)    // mm/sec
-#define DEFAULT_A_MAX_RATE (50.0)     // mm/sec
-
-#define DEFAULT_X_ACCELERATION (3000) // mm/sec^2
-#define DEFAULT_Y_ACCELERATION (3000) // mm/sec^2
-#define DEFAULT_A_ACCELERATION (300)  // mm/sec^2
-
-#define DEFAULT_X_MAX_TRAVEL 122.0       // mm
-#define DEFAULT_Y_MAX_TRAVEL 122.0       // mm
-#define DEFAULT_A_MAX_TRAVEL 100000000.0 // mm
-
-#define DEFAULT_JUNCTION_DEVIATION 0.01  // mm
-*/
 
 //global settings
 typedef struct {
@@ -78,6 +57,7 @@ typedef struct {
   double x_hofs_lo;
   double y_hofs_lo;
   double z_hofs_lo;
+  double heatbed_wait_factor;
 } settings_t;
 
 extern settings_t settings;
@@ -108,8 +88,8 @@ extern settings_t settings_box;
 // When increasing this value, this stores less overall time in the segment buffer and vice versa. Make
 // certain the step segment buffer is increased/decreased to account for these changes.
 //#define ACCELERATION_TICKS_PER_SECOND 100.0
-//#define ACCELERATION_TICKS_PER_SECOND (0.1/60.0)   //acceleration is handled in machine
-#define ACCELERATION_TICKS_PER_SECOND   0            //acceleration is handled in machine
+//#define ACCELERATION_TICKS_PER_SECOND (0.1/60.0)      //acceleration is handled in machine
+#define ACCELERATION_TICKS_PER_SECOND   (1/(60.0*5.0))  //segment max is 5 seconds
 
 // Conversions
 #define MM_PER_INCH (25.40)

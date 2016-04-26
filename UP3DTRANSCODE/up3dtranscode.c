@@ -30,17 +30,17 @@
 
 void print_usage_and_exit()
 {
-  printf("Usage: up3dtranscode machinetype input.gcode output.umc [nozzleheight]\n\n");
+  printf("Usage: up3dtranscode machinetype input.gcode output.umc nozzleheight\n\n");
   printf("          machinetype:  mini / classic / plus / box\n");
   printf("          input.gcode:  g-code file from slic3r/cura/simplify\n");
   printf("          output.umc:   up machine code file which will be generated\n");
-  printf("          nozzleheight: nozzle distance from bed (123.45)\n\n");
+  printf("          nozzleheight: nozzle distance from bed (e.g. 123.45)\n\n");
   exit(0);
 }
 
 int main(int argc, char *argv[])
 {
-  if( (argc<4) || (argc>5) )
+  if( 5 != argc )
     print_usage_and_exit();
 
   switch( argv[1][0] )
@@ -63,6 +63,13 @@ int main(int argc, char *argv[])
       print_usage_and_exit();
   }
 
+  double nozzle_height;
+  if( 1 != sscanf(argv[4],"%lf", &nozzle_height) )
+  {
+    printf("ERROR: Invalid nozzle height: %s\n\n", argv[4]);
+    print_usage_and_exit();
+  }
+
   FILE* fgcode = fopen( argv[2], "r" );
   if( !fgcode )
   {
@@ -70,42 +77,21 @@ int main(int argc, char *argv[])
     print_usage_and_exit();
   }
 
-  char line[1024];
-
-  //gcode parsing pass 1 (determine print time)
-  umcwriter_init( NULL, 0, 0 );
-
-  gcp_reset();
-  while( fgets(line,sizeof(line),fgcode) )
-    gcp_process_line(line);
-
-  umcwriter_finish();
-  int32_t print_time = umcwriter_get_print_time();
-
-  double nozzle_height = 123.45; //set default nozzle height
-
-  if( 5 == argc )
-  {
-    if( 1 != sscanf(argv[4],"%lf", &nozzle_height) )
-    {
-      printf("ERROR: Invalid nozzle height: %s\n\n", argv[4]);
-      print_usage_and_exit();
-    }
-  }
-
-  //gcode parsing pass 2 (write output)
-  rewind( fgcode );
-  if( !umcwriter_init( argv[3], nozzle_height, print_time ) )
+  if( !umcwriter_init( argv[3], nozzle_height, argv[1][0] ) )
   {
     printf("ERROR: Could not open %s for writing\n\n", argv[3]);
     print_usage_and_exit();
   }
 
   gcp_reset();
+  
+  char line[1024];  
   while( fgets(line,sizeof(line),fgcode) )
-    gcp_process_line(line);
+    if( !gcp_process_line(line) )
+      return 0;
 
   umcwriter_finish();
+  int32_t print_time = umcwriter_get_print_time();
 
   fclose( fgcode );
 

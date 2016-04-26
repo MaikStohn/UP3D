@@ -23,6 +23,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static unsigned int gcp_line_number;
 static unsigned int gcp_file_line_number;
@@ -68,12 +69,7 @@ bool gcp_process_line(const char* gcodeline)
 
   if( 'N'==*line )
   {
-    double lineno;
-    if( 1 != sscanf( line,"N%lf", &lineno ) )
-    {
-      gcp_error("Invalid line number format",gcodeline);
-      return false;
-    }
+    double lineno = strtod( line+1, NULL);
     if( gcp_line_number+1 != lineno )
     {
       gcp_error("Invalid line number sequence",gcodeline);
@@ -89,12 +85,7 @@ bool gcp_process_line(const char* gcodeline)
 
   if( (tok = strchr(line,'*')) )
   {
-    double checksum;
-    if( 1 != sscanf( tok,"*%lf", &checksum ) )
-    {
-      gcp_error("Invalid checksum format",gcodeline);
-      return false;
-    }
+    double checksum = strtod( tok+1, NULL);
     uint8_t csx=0;
     for( tok--; tok!=line; tok-- )
       csx^=*tok;
@@ -115,28 +106,30 @@ bool gcp_process_line(const char* gcodeline)
   }
 
   bool  xp=false,yp=false,zp=false,ep=false,fp=false,tp=false,sp=false,pp=false,rp=false;
-  double xv,yv,zv,ev,fv,tv,sv,pv,rv;
+  double xv=0,yv=0,zv=0,ev=0,fv=0,tv=0,sv=0,pv=0,rv=0;
   bool  xb=false,yb=false,zb=false,eb=false,fb=false,tb=false,sb=false,pb=false,rb=false;
 
   for( tok=line; tok; tok=strchr(tok,' ') ) //white spaces ???
   {
     if( !tok || !*(++tok) )
       break;
-    if('X'==*tok){xp=true;if(1==sscanf(tok,"X%lf",&xv))xb=true;}
-    if('Y'==*tok){yp=true;if(1==sscanf(tok,"Y%lf",&yv))yb=true;}
-    if('Z'==*tok){zp=true;if(1==sscanf(tok,"Z%lf",&zv))zb=true;}
-    if('E'==*tok){ep=true;if(1==sscanf(tok,"E%lf",&ev))eb=true;}
-    if('F'==*tok){fp=true;if(1==sscanf(tok,"F%lf",&fv))fb=true;}
 
-    if('T'==*tok){tp=true;if(1==sscanf(tok,"T%lf",&tv))tb=true;}
-    if('S'==*tok){sp=true;if(1==sscanf(tok,"S%lf",&sv))sb=true;}
-    if('P'==*tok){pp=true;if(1==sscanf(tok,"P%lf",&pv))pb=true;}
-    if('R'==*tok){rp=true;if(1==sscanf(tok,"R%lf",&rv))rb=true;}
+    char* ref=NULL;
+    if('X'==*tok){xp=true;xv=strtod(tok+1,&ref);xb=(ref!=NULL);}
+    if('Y'==*tok){yp=true;yv=strtod(tok+1,&ref);yb=(ref!=NULL);}
+    if('Z'==*tok){zp=true;zv=strtod(tok+1,&ref);zb=(ref!=NULL);}
+    if('E'==*tok){ep=true;ev=strtod(tok+1,&ref);eb=(ref!=NULL);}
+    if('F'==*tok){fp=true;fv=strtod(tok+1,&ref);fb=(ref!=NULL);}
+    if('T'==*tok){tp=true;tv=strtod(tok+1,&ref);tb=(ref!=NULL);}
+    if('S'==*tok){sp=true;sv=strtod(tok+1,&ref);sb=(ref!=NULL);}
+    if('P'==*tok){pp=true;pv=strtod(tok+1,&ref);pb=(ref!=NULL);}
+    if('R'==*tok){rp=true;rv=strtod(tok+1,&ref);rb=(ref!=NULL);}
   }
   
-  double code;
-  if( 1 == sscanf( line,"G%lf", &code ) )
+  if( 'G'==*line )
   {
+    char* ref = NULL;
+    double code = strtod( line+1, &ref ); if(!ref) code=-1;
     switch( (int)code )
     {
       case 0:
@@ -200,14 +193,14 @@ bool gcp_process_line(const char* gcodeline)
         break;
 
       case 92: //set position
-       {
-         if(xb) gcp_X=xv;
-         if(yb) gcp_Y=yv;
-         if(zb) gcp_Z=zv;
-         if(eb) gcp_E=ev;
-         umcwriter_planner_set_position(gcp_X,gcp_Y,gcp_E);
-       }
-       break;
+        {
+          if(xb) gcp_X=xv;
+          if(yb) gcp_Y=yv;
+          if(zb) gcp_Z=zv;
+          if(eb) gcp_E=ev;
+          umcwriter_planner_set_position(gcp_X,gcp_Y,gcp_E);
+        }
+        break;
  
       default:
         gcp_error("UNSUPPORTED command",gcodeline);
@@ -215,8 +208,10 @@ bool gcp_process_line(const char* gcodeline)
     }
   }
   else
-  if( 1 == sscanf( line,"M%lf", &code ) )
+  if( 'M'==*line )
   {
+    char* ref=NULL;
+    double code = strtod( line+1, &ref ); if(!ref) code=-1;
     switch( (int)code )
     {
       case 82: //set extruder absolute mode - default
@@ -266,8 +261,9 @@ bool gcp_process_line(const char* gcodeline)
     }
   }
   else
-  if( 1 == sscanf( line,"T%lf", &code ) )
+  if( 'T'==*line )
   {
+    //double code = strtod( line+1, NULL);
     umcwriter_planner_sync();
     //ignore any T (tool change) commands
   }

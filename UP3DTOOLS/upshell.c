@@ -10,10 +10,12 @@
 #endif
 #include <signal.h>
 #include <string.h>
+#include <sys/time.h>
 
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "compat.h"
 #include "up3d.h"
 
 #define printw_b(...) {attron(A_BOLD);printw(__VA_ARGS__),attroff(A_BOLD);}
@@ -100,7 +102,22 @@ static void update_state(bool redrawall)
 
   move(11,cols-24);
   printw_b("Time Remaining:");
+
+  static int32_t old_tr = 0;
+  static struct timeval tval_old;
   int32_t tr = UP3D_GetTimeRemaining();
+  if( (old_tr == tr) && (tr>0) )
+  {
+    struct timeval tval_now, tval_diff;
+    gettimeofday(&tval_now, NULL);
+    timersub(&tval_now, &tval_old, &tval_diff);
+    tr = old_tr - tval_diff.tv_sec;
+  }
+  else
+  {
+    gettimeofday(&tval_old, NULL);
+    old_tr = tr;
+  }
   int32_t trh = tr / (60*60); tr -= trh*60*60;
   int32_t trm = tr / 60; tr -= trm*60;
   int32_t trs = tr;

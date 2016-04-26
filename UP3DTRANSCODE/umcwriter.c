@@ -27,35 +27,37 @@
 #include <stdio.h>
 #include <math.h>
 
-static FILE* umcwriter_file;
-static double umcwriter_Z;
-static double umcwriter_Z_height;
-static double umcwriter_print_time;
-static double umcwriter_print_time_max;
-static double g_r0, g_r1, g_r2;
+static FILE*   umcwriter_file;
+static double  umcwriter_Z;
+static double  umcwriter_Z_height;
+static double  umcwriter_print_time;
+static char    umcwriter_machine_type;
+
+#ifdef X_REF_CALC
+static double  g_r0, g_r1, g_r2;
+#endif
 
 static int _umcwriter_write_file(UP3D_BLK* pblks, uint32_t blks )
 {
   if( umcwriter_file )
-    return fwrite( pblks, blks, sizeof(UP3D_BLK), umcwriter_file );
+    return (int)fwrite( pblks, blks, sizeof(UP3D_BLK), umcwriter_file );
   else
     return 0;
 }
 
-bool umcwriter_init(const char* filename, double heightZ, double printTimeMax)
+bool umcwriter_init(const char* filename, const double heightZ, const char machine_type)
 {
   umcwriter_Z = 0;
   umcwriter_Z_height = heightZ;
   umcwriter_print_time = 0;
-  umcwriter_print_time_max = printTimeMax?printTimeMax:1;
+  umcwriter_machine_type = machine_type;
   
-  umcwriter_file = NULL;
-  if( filename )
-  {
-    umcwriter_file = fopen(filename,"wb");
-    if( !umcwriter_file )
-      return false;
-  }
+  st_reset();
+  plan_reset();
+
+  umcwriter_file = fopen(filename,"wb+");
+  if( !umcwriter_file )
+    return false;
 
   umcwriter_set_report_data( 0, 0 );
 
@@ -65,28 +67,22 @@ bool umcwriter_init(const char* filename, double heightZ, double printTimeMax)
 
   umcwriter_pause(4000); //wait for power on complete and temperature measurement to stabilize
 
-  st_reset();
-  plan_reset();
-
-//TODO: move...?
-  UP3D_PROG_BLK_SetParameter(&blk,0x41,267);              //? TEMP FOR NOZZLE1 TEMP REACHED
+  UP3D_PROG_BLK_SetParameter(&blk,0x41,0);              //TEMP FOR NOZZLE1 TEMP REACHED
   _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,0x42,242);              //? TEMP FOR NOZZLE2 TEMP REACHED
+  UP3D_PROG_BLK_SetParameter(&blk,0x42,0);              //TEMP FOR NOZZLE2 TEMP REACHED
   _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,0x43,104);              //? TEMP FOR BED TEMP REACHED
+  UP3D_PROG_BLK_SetParameter(&blk,0x43,0);              //TEMP FOR BED TEMP REACHED
   _umcwriter_write_file(&blk, 1);
 
 // NEEDED?
   UP3D_PROG_BLK_SetParameter(&blk,0x46,13);               //?
   _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,0x49,80);               //?
-  _umcwriter_write_file(&blk, 1);
 
-
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_LAYER,0);  //layer 0
-  _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_HEIGHT,0); //height 0
-  _umcwriter_write_file(&blk, 1);
+  if( 'm' == umcwriter_machine_type )
+  {
+    UP3D_PROG_BLK_SetParameter(&blk,0x49,80);           //? for up mini only!
+    _umcwriter_write_file(&blk, 1);
+  }
 
   //home all axis (needed for correct print status
   umcwriter_home(0);
@@ -99,31 +95,31 @@ bool umcwriter_init(const char* filename, double heightZ, double printTimeMax)
   _umcwriter_write_file(&blk, 1);
 
 // NEEDED ?
-  UP3D_PROG_BLK_SetParameter(&blk,0x35,0);              //check work room fan
+  UP3D_PROG_BLK_SetParameter(&blk,0x35,0);              //needed for heat bed!
   _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,0x2A,5000);           //change nozzle time
-  _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,0x2B,0);              //jump time
-  _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,0x36,103);            //feedback length ?
-  _umcwriter_write_file(&blk, 1);
+//  UP3D_PROG_BLK_SetParameter(&blk,0x36,103);            //feedback length ?
+//  _umcwriter_write_file(&blk, 1);
 
+//  UP3D_PROG_BLK_SetParameter(&blk,0x2A,5000);           //change nozzle time
+//  _umcwriter_write_file(&blk, 1);
+//  UP3D_PROG_BLK_SetParameter(&blk,0x2B,0);              //jump time
+//  _umcwriter_write_file(&blk, 1);
 
   UP3D_PROG_BLK_SetParameter(&blk,0x17,0);              //nozzle #1 not open
   _umcwriter_write_file(&blk, 1);
 
-/* PROBLEM...
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_PRINT_STATUS,2); //running ==> NOZZLE TO COOL ???
-  _umcwriter_write_file(&blk, 1);
-*/
+// PROBLEM...
+//  UP3D_PROG_BLK_SetParameter(&blk,PARA_PRINT_STATUS,2); //running ==> PAUSED ???
+//  _umcwriter_write_file(&blk, 1);
+//
 
 // NEEDED?
   UP3D_PROG_BLK_SetParameter(&blk,0x82,255);            //?
   _umcwriter_write_file(&blk, 1);
   UP3D_PROG_BLK_SetParameter(&blk,0x83,255);            //?
   _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,0x1D,100000);         //feed error length
-  _umcwriter_write_file(&blk, 1);
+  //DEL UP3D_PROG_BLK_SetParameter(&blk,0x1D,100000);         //feed error length
+  //DEL _umcwriter_write_file(&blk, 1);
 
 
 /* PROBLEM...
@@ -139,11 +135,42 @@ void umcwriter_finish()
 
   umcwriter_print_time += 1.5; //1.5 seconds for end of job
 
-  UP3D_BLK blk;
-
   umcwriter_beep(200);umcwriter_pause(200);
   umcwriter_beep(200);umcwriter_pause(200);
   umcwriter_beep(200);umcwriter_pause(500);
+
+  UP3D_BLK blk;
+
+  //post process time and perecent values
+  rewind( umcwriter_file );
+  double time = 0;
+  for(;;)
+  {
+    if( fread( &blk, sizeof(UP3D_BLK), 1, umcwriter_file ) <= 0 )
+      break;
+
+    if( UP3DPCMD_SetParameter == blk.pcmd )
+    {
+      bool change = false;
+      if( PARA_REPORT_TIME_REMAIN == blk.pdat1.l )
+      {
+        time = blk.pdat2.l;
+        blk.pdat2.l = (int32_t)(umcwriter_print_time - time);
+        change=true;
+      }
+      if( PARA_REPORT_PERCENT == blk.pdat1.l )
+      {
+        blk.pdat2.l = (time*100)/umcwriter_print_time;
+        change=true;
+      }
+      
+      if( change )
+      {
+        fseek( umcwriter_file, -sizeof(UP3D_BLK), SEEK_CUR );
+        fwrite( &blk, sizeof(UP3D_BLK), 1, umcwriter_file );
+      }
+    }
+  }
 
   UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_PERCENT,100);
   _umcwriter_write_file(&blk, 1);
@@ -178,7 +205,7 @@ void umcwriter_home(int32_t axes)
   double pos[3];
   plan_get_position(pos);
 
-  umcwriter_print_time += 7; //apx. 7 seconds for homing
+  umcwriter_print_time += 3; //apx. 3 seconds for homing of one axis
   
   UP3D_BLK blk;
   
@@ -277,14 +304,13 @@ void umcwriter_planner_set_position(double X, double Y, double A)
   plan_set_position(pos);
   st_reset();
 
-/*
-printf("D: %.6lf  %.6lf  %.6lf\n", g_r0-pos[0], g_r1-pos[1], g_r2-pos[2] );
-printf("R: %.6lf  %.6lf  %.6lf\n", g_r0, g_r1, g_r2 );
-printf("N: %.6lf  %.6lf  %.6lf\n", pos[0], pos[1], pos[2] );
-printf("\n");
-*/
-
+#ifdef X_REF_CALC
+  printf("D: %.6lf  %.6lf  %.6lf\n", g_r0-pos[0], g_r1-pos[1], g_r2-pos[2] );
+  printf("R: %.6lf  %.6lf  %.6lf\n", g_r0, g_r1, g_r2 );
+  printf("N: %.6lf  %.6lf  %.6lf\n", pos[0], pos[1], pos[2] );
+  printf("\n");
   g_r0 = pos[0]; g_r1 = pos[1]; g_r2 = pos[2];
+#endif
 }
 
 void umcwriter_planner_add(double X, double Y, double A, double F)
@@ -298,12 +324,14 @@ void umcwriter_planner_add(double X, double Y, double A, double F)
     UP3D_PROG_BLK_MoveL(&blk,pseg->p1,pseg->p2,pseg->p3,pseg->p4,pseg->p5,pseg->p6,pseg->p7,pseg->p8);
     _umcwriter_write_file(&blk, 1);
 
+#ifdef X_REF_CALC
     //calculate reference position for error tracking
     int32_t p1 = pseg->p1; int32_t p2 = pseg->p2; int32_t p3 = pseg->p3; int32_t p4 = pseg->p4;
     int32_t p5 = pseg->p5; int32_t p6 = pseg->p6; int32_t p7 = pseg->p7; int32_t p8 = pseg->p8;
     g_r0 += (floor((float)((p3*p1+p6*p1*p1/2))/512)*512)/settings.steps_per_mm[0];
     g_r1 += (floor((float)((p4*p1+p7*p1*p1/2))/512)*512)/settings.steps_per_mm[1];
     g_r2 += (floor((float)((p5*p1+p8*p1*p1/2))/512)*512)/settings.steps_per_mm[2];
+#endif
   }
 
   double pos[3];
@@ -325,12 +353,14 @@ void umcwriter_planner_sync()
     UP3D_PROG_BLK_MoveL(&blk,pseg->p1,pseg->p2,pseg->p3,pseg->p4,pseg->p5,pseg->p6,pseg->p7,pseg->p8);
     _umcwriter_write_file(&blk, 1);
 
+#ifdef X_REF_CALC
     //calculate reference position for error tracking
     int32_t p1 = pseg->p1; int32_t p2 = pseg->p2; int32_t p3 = pseg->p3; int32_t p4 = pseg->p4;
     int32_t p5 = pseg->p5; int32_t p6 = pseg->p6; int32_t p7 = pseg->p7; int32_t p8 = pseg->p8;
     g_r0 += (floor((float)((p3*p1+p6*p1*p1/2))/512)*512)/settings.steps_per_mm[0];
     g_r1 += (floor((float)((p4*p1+p7*p1*p1/2))/512)*512)/settings.steps_per_mm[1];
     g_r2 += (floor((float)((p5*p1+p8*p1*p1/2))/512)*512)/settings.steps_per_mm[2];
+#endif
   }
 }
 
@@ -344,6 +374,12 @@ void umcwriter_set_extruder_temp(double temp, bool wait)
   {
     //TODO: always ???
     UP3D_PROG_BLK_SetParameter(&blk,0x17,1);              //nozzle #1 open
+    _umcwriter_write_file(&blk, 1);
+  }
+
+  if( temp )
+  {
+    UP3D_PROG_BLK_SetParameter(&blk,0x41,temp);          //TEMP FOR NOZZLE1_TEMP_REACHED
     _umcwriter_write_file(&blk, 1);
   }
 
@@ -364,6 +400,8 @@ void umcwriter_set_extruder_temp(double temp, bool wait)
 
     UP3D_PROG_BLK_SetParameter(&blk,PARA_RED_BLUE_BLINK,200);
     _umcwriter_write_file(&blk, 1);
+
+    umcwriter_set_report_data(-1,-1);
   }
 }
 
@@ -372,6 +410,13 @@ void umcwriter_set_bed_temp(int32_t temp, bool wait)
   umcwriter_planner_sync();
 
   UP3D_BLK blk;
+ 
+  if( temp )
+  {
+    UP3D_PROG_BLK_SetParameter(&blk,0x43,temp); //TEMP FOR BED_TEMP_REACHED
+   _umcwriter_write_file(&blk, 1);
+  }
+
   UP3D_PROG_BLK_SetParameter(&blk,PARA_BED_TEMP,temp);
   _umcwriter_write_file(&blk, 1);
   UP3D_PROG_BLK_SetParameter(&blk,PARA_HEATER_BED_ON,(temp)?1:0);
@@ -382,40 +427,40 @@ void umcwriter_set_bed_temp(int32_t temp, bool wait)
     UP3D_PROG_BLK_SetParameter(&blk,PARA_RED_BLUE_BLINK,400);
     _umcwriter_write_file(&blk, 1);
 
-#ifdef X_WAIT_HEATBED_FACTOR
-    //TODO: better wait... idea: move nozzle to bed and use thermistor of nozzle
-    if(temp>50)
-    {
-      umcwriter_pause(temp/10*60*1000); //wait 5,6,7,8,9,10 (50,60,70,80,90C) minutes
-      umcwriter_print_time += temp/10*60;
-    }
-#else
-    umcwriter_pause(3*60*1000); //wait 3 minute
-    umcwriter_print_time += 3*60;
-#endif
+    uint32_t waitsec = (temp/settings.heatbed_wait_factor)*60; 
+    umcwriter_pause(waitsec*1000);
 
     UP3D_PROG_BLK_SetParameter(&blk,PARA_RED_BLUE_BLINK,200);
     _umcwriter_write_file(&blk, 1);
+
+    umcwriter_set_report_data(-1,-1);
   }
 }
 
 void umcwriter_set_report_data(int32_t layer, double height)
 {
-  int32_t percent = (umcwriter_print_time*100)/umcwriter_print_time_max;
-  int32_t seconds_remaining = umcwriter_print_time_max - umcwriter_print_time;
-
   UP3D_BLK blk;
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_LAYER,layer);
+
+  if( layer>=0 )
+  {
+    UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_LAYER,layer);
+    _umcwriter_write_file(&blk, 1);
+  }
+
+  if( height>=0 )
+  {
+    float h = (float)height;
+    UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_HEIGHT,*((int32_t*)&h));
+    _umcwriter_write_file(&blk, 1);
+  }
+
+  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_PERCENT,0);
   _umcwriter_write_file(&blk, 1);
-  float h = (float)height;
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_HEIGHT,*((int32_t*)&h));
-  _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_PERCENT,percent);
-  _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_TIME_REMAIN,seconds_remaining);
+
+  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_TIME_REMAIN,(int32_t)umcwriter_print_time);
   _umcwriter_write_file(&blk, 1);
 }
- 
+
 void umcwriter_pause(uint32_t msec)
 {
   umcwriter_planner_sync();
@@ -434,8 +479,9 @@ void umcwriter_beep(uint32_t msec)
   UP3D_BLK blk;
   UP3D_PROG_BLK_Beeper(&blk,true);
   _umcwriter_write_file(&blk, 1);
-  UP3D_PROG_BLK_Pause(&blk,msec);
-  _umcwriter_write_file(&blk, 1);
+
+  umcwriter_pause(msec);
+
   UP3D_PROG_BLK_Beeper(&blk,false);
   _umcwriter_write_file(&blk, 1);
 }
