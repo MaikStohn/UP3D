@@ -40,7 +40,7 @@ void print_usage_and_exit()
 
 int main(int argc, char *argv[])
 {
-  if( (argc<4) || (argc>5) )
+  if( 5 != argc )
     print_usage_and_exit();
 
   switch( argv[1][0] )
@@ -63,6 +63,13 @@ int main(int argc, char *argv[])
       print_usage_and_exit();
   }
 
+  double nozzle_height;
+  if( 1 != sscanf(argv[4],"%lf", &nozzle_height) )
+  {
+    printf("ERROR: Invalid nozzle height: %s\n\n", argv[4]);
+    print_usage_and_exit();
+  }
+
   FILE* fgcode = fopen( argv[2], "r" );
   if( !fgcode )
   {
@@ -81,17 +88,6 @@ int main(int argc, char *argv[])
 
   umcwriter_finish();
   int32_t print_time = umcwriter_get_print_time();
-
-  double nozzle_height = 123.45; //set default nozzle height
-
-  if( 5 == argc )
-  {
-    if( 1 != sscanf(argv[4],"%lf", &nozzle_height) )
-    {
-      printf("ERROR: Invalid nozzle height: %s\n\n", argv[4]);
-      print_usage_and_exit();
-    }
-  }
 
   //gcode parsing pass 2 (write output)
   rewind( fgcode );
