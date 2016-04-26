@@ -39,7 +39,7 @@ static double  g_r0, g_r1, g_r2;
 static int _umcwriter_write_file(UP3D_BLK* pblks, uint32_t blks )
 {
   if( umcwriter_file )
-    return fwrite( pblks, blks, sizeof(UP3D_BLK), umcwriter_file );
+    return (int)fwrite( pblks, blks, sizeof(UP3D_BLK), umcwriter_file );
   else
     return 0;
 }
@@ -320,10 +320,10 @@ void umcwriter_planner_add(double X, double Y, double A, double F)
     UP3D_PROG_BLK_MoveL(&blk,pseg->p1,pseg->p2,pseg->p3,pseg->p4,pseg->p5,pseg->p6,pseg->p7,pseg->p8);
     _umcwriter_write_file(&blk, 1);
 
+#ifdef X_REF_CALC
     //calculate reference position for error tracking
     int32_t p1 = pseg->p1; int32_t p2 = pseg->p2; int32_t p3 = pseg->p3; int32_t p4 = pseg->p4;
     int32_t p5 = pseg->p5; int32_t p6 = pseg->p6; int32_t p7 = pseg->p7; int32_t p8 = pseg->p8;
-#ifdef X_REF_CALC
     g_r0 += (floor((float)((p3*p1+p6*p1*p1/2))/512)*512)/settings.steps_per_mm[0];
     g_r1 += (floor((float)((p4*p1+p7*p1*p1/2))/512)*512)/settings.steps_per_mm[1];
     g_r2 += (floor((float)((p5*p1+p8*p1*p1/2))/512)*512)/settings.steps_per_mm[2];
