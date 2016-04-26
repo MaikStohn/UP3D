@@ -77,31 +77,20 @@ int main(int argc, char *argv[])
     print_usage_and_exit();
   }
 
-  char line[1024];
-
-  //gcode parsing pass 1 (determine print time)
-  umcwriter_init( NULL, 0, 0 );
-
-  gcp_reset();
-  while( fgets(line,sizeof(line),fgcode) )
-    gcp_process_line(line);
-
-  umcwriter_finish();
-  int32_t print_time = umcwriter_get_print_time();
-
-  //gcode parsing pass 2 (write output)
-  rewind( fgcode );
-  if( !umcwriter_init( argv[3], nozzle_height, print_time ) )
+  if( !umcwriter_init( argv[3], nozzle_height ) )
   {
     printf("ERROR: Could not open %s for writing\n\n", argv[3]);
     print_usage_and_exit();
   }
 
   gcp_reset();
+  
+  char line[1024];  
   while( fgets(line,sizeof(line),fgcode) )
     gcp_process_line(line);
 
   umcwriter_finish();
+  int32_t print_time = umcwriter_get_print_time();
 
   fclose( fgcode );
 
