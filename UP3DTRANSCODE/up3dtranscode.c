@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
     print_usage_and_exit();
   }
 
-  if( !umcwriter_init( argv[3], nozzle_height ) )
+  if( !umcwriter_init( argv[3], nozzle_height, argv[1][0] ) )
   {
     printf("ERROR: Could not open %s for writing\n\n", argv[3]);
     print_usage_and_exit();

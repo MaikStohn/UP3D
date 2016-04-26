@@ -31,6 +31,7 @@ static FILE*   umcwriter_file;
 static double  umcwriter_Z;
 static double  umcwriter_Z_height;
 static double  umcwriter_print_time;
+static char    umcwriter_machine_type;
 
 #ifdef X_REF_CALC
 static double  g_r0, g_r1, g_r2;
@@ -44,11 +45,12 @@ static int _umcwriter_write_file(UP3D_BLK* pblks, uint32_t blks )
     return 0;
 }
 
-bool umcwriter_init(const char* filename, const double heightZ)
+bool umcwriter_init(const char* filename, const double heightZ, const char machine_type)
 {
   umcwriter_Z = 0;
   umcwriter_Z_height = heightZ;
   umcwriter_print_time = 0;
+  umcwriter_machine_type = machine_type;
   
   st_reset();
   plan_reset();
@@ -76,9 +78,11 @@ bool umcwriter_init(const char* filename, const double heightZ)
   UP3D_PROG_BLK_SetParameter(&blk,0x46,13);               //?
   _umcwriter_write_file(&blk, 1);
 
-  UP3D_PROG_BLK_SetParameter(&blk,0x49,80);               //? for up mini only !!!
-  _umcwriter_write_file(&blk, 1);
-
+  if( 'm' == umcwriter_machine_type )
+  {
+    UP3D_PROG_BLK_SetParameter(&blk,0x49,80);           //? for up mini only!
+    _umcwriter_write_file(&blk, 1);
+  }
 
   //home all axis (needed for correct print status
   umcwriter_home(0);
