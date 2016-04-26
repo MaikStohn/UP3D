@@ -87,7 +87,8 @@ int main(int argc, char *argv[])
   
   char line[1024];  
   while( fgets(line,sizeof(line),fgcode) )
-    gcp_process_line(line);
+    if( !gcp_process_line(line) )
+      return 0;
 
   umcwriter_finish();
   int32_t print_time = umcwriter_get_print_time();
