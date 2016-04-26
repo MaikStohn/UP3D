@@ -30,11 +30,11 @@
 
 void print_usage_and_exit()
 {
-  printf("Usage: up3dtranscode machinetype input.gcode output.umc [nozzleheight]\n\n");
+  printf("Usage: up3dtranscode machinetype input.gcode output.umc nozzleheight\n\n");
   printf("          machinetype:  mini / classic / plus / box\n");
   printf("          input.gcode:  g-code file from slic3r/cura/simplify\n");
   printf("          output.umc:   up machine code file which will be generated\n");
-  printf("          nozzleheight: nozzle distance from bed (123.45)\n\n");
+  printf("          nozzleheight: nozzle distance from bed (e.g. 123.45)\n\n");
   exit(0);
 }
 
