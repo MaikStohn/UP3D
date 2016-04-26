@@ -392,7 +392,7 @@ void umcwriter_set_bed_temp(int32_t temp, bool wait)
     _umcwriter_write_file(&blk, 1);
 
     uint32_t waitsec = (temp/settings.heatbed_wait_factor)*60; 
-    umcwriter_pause(waitsec);
+    umcwriter_pause(waitsec*1000);
 
     UP3D_PROG_BLK_SetParameter(&blk,PARA_RED_BLUE_BLINK,200);
     _umcwriter_write_file(&blk, 1);
