@@ -32,6 +32,7 @@ static double  umcwriter_Z;
 static double  umcwriter_Z_height;
 static double  umcwriter_print_time;
 static char    umcwriter_machine_type;
+static int32_t umcwriter_bed_temp;
 
 #ifdef X_REF_CALC
 static double  g_r0, g_r1, g_r2;
@@ -51,6 +52,7 @@ bool umcwriter_init(const char* filename, const double heightZ, const char machi
   umcwriter_Z_height = heightZ;
   umcwriter_print_time = 0;
   umcwriter_machine_type = machine_type;
+  umcwriter_bed_temp = 0;
   
   st_reset();
   plan_reset();
@@ -422,12 +424,12 @@ void umcwriter_set_bed_temp(int32_t temp, bool wait)
   UP3D_PROG_BLK_SetParameter(&blk,PARA_HEATER_BED_ON,(temp)?1:0);
   _umcwriter_write_file(&blk, 1);
 
-  if(wait)
+  if(wait && (temp>umcwriter_bed_temp) ) //only wait if new temperature is higher
   {
     UP3D_PROG_BLK_SetParameter(&blk,PARA_RED_BLUE_BLINK,400);
     _umcwriter_write_file(&blk, 1);
 
-    uint32_t waitsec = (temp/settings.heatbed_wait_factor)*60; 
+    uint32_t waitsec = ((temp-umcwriter_bed_temp)/settings.heatbed_wait_factor)*60;
     umcwriter_pause(waitsec*1000);
 
     UP3D_PROG_BLK_SetParameter(&blk,PARA_RED_BLUE_BLINK,200);
@@ -435,6 +437,7 @@ void umcwriter_set_bed_temp(int32_t temp, bool wait)
 
     umcwriter_set_report_data(-1,-1);
   }
+  umcwriter_bed_temp = temp;
 }
 
 void umcwriter_set_report_data(int32_t layer, double height)
