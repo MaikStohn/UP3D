@@ -12,7 +12,7 @@ fi
 
 if [[ "$OSTYPE" == "msys" ]]; then
 
-$CC -std=c99 -O2 \
+$CC -std=c99 -Ofast -fwhole-program -flto \
     -I../UP3DCOMMON \
     -o up3dtranscode.exe up3dconf.c hoststepper.c hostplanner.c gcodeparser.c ../UP3DCOMMON/up3ddata.c umcwriter.c up3dtranscode.c -lm
 
@@ -21,7 +21,7 @@ $STRIP up3dtranscode.exe
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 
 
-$CC -std=c99 -O2 \
+$CC -std=c99 -Ofast -fwhole-program -flto \
     -I../UP3DCOMMON \
     -framework IOKit \
     -framework CoreFoundation \
@@ -31,9 +31,9 @@ $CC -std=c99 -O2 \
 $STRIP up3dtranscode
 
 
-elif [[ "$OSTYPE" == "linux-gnu" ]]; then
+elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
 
-$CC -std=c99 -O2 \
+$CC -std=c99 -Ofast -fwhole-program -flto \
     -I../UP3DCOMMON \
     -o up3dtranscode up3dconf.c hoststepper.c hostplanner.c gcodeparser.c ../UP3DCOMMON/up3ddata.c umcwriter.c up3dtranscode.c -lm
 
