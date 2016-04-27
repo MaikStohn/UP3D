@@ -21,7 +21,7 @@ $STRIP up3dtranscode.exe
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 
 
-$CC -std=c99 -Ofast -fwhole-program -flto \
+$CC -std=c99 -Ofast \
     -I../UP3DCOMMON \
     -framework IOKit \
     -framework CoreFoundation \
