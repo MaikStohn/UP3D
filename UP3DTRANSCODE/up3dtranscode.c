@@ -84,8 +84,8 @@ int main(int argc, char *argv[])
   }
 
   gcp_reset();
-  
-  char line[1024];  
+
+  char line[1024];
   while( fgets(line,sizeof(line),fgcode) )
     if( !gcp_process_line(line) )
       return 0;
@@ -100,6 +100,6 @@ int main(int argc, char *argv[])
   int m = print_time/60; printf("%02dm:",m); print_time -= m*60;
   printf("%02ds",print_time);
   printf(" / Nozzle Height: %.2fmm\n", nozzle_height);
-  
-  return 0; 
+
+  return 0;
 }

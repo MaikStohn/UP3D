@@ -53,7 +53,7 @@ bool umcwriter_init(const char* filename, const double heightZ, const char machi
   umcwriter_print_time = 0;
   umcwriter_machine_type = machine_type;
   umcwriter_bed_temp = 0;
-  
+
   st_reset();
   plan_reset();
 
@@ -165,11 +165,12 @@ void umcwriter_finish()
         blk.pdat2.l = (time*100)/umcwriter_print_time;
         change=true;
       }
-      
+
       if( change )
       {
         fseek( umcwriter_file, -sizeof(UP3D_BLK), SEEK_CUR );
         fwrite( &blk, sizeof(UP3D_BLK), 1, umcwriter_file );
+        fseek( umcwriter_file, 0, SEEK_CUR ); //workaround for windows bug
       }
     }
   }
