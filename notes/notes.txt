@@ -184,3 +184,20 @@ CMD SUB LEN
 4C 30 ? 01 00 00 00   06     (L0)
 
 
+***********************************************
+pcGetPrinterInfo: F0F0 0x1001 len 18 ...
+pcGetPrinterConnect: F0F0 ??0x200C??? len 76 (packhostinfo +...)
+
+pcCheckDevice: F0F0 0x2001 len 4 DWORD
+pcGetC3kVer: F0F0 0x2003 len 2 WORD
+pcGetDevInfo: F0F0 0x2004 len 24 DATA
+pcGetIPConfig: F0F0 0x2005 len 24 DATA (4*6)
+pcGetLanEvaluate: F0F0 0x2006 len 44 DATA (4+40)
+pcSendFileHeader: F0F0 0x200B len 56 DATA (4+4+4+4+4+2+32)
+pcSendServerAddr: F0F0 0x200C len 76 DATA (PackHostInfo)
+
+TCP?: KeepLive F0F0 0x200D len:0
+
+devEchoInfo: F0F0 0x4001 len 128 ...
+devEchoMessage: F0F0 0x4002 len 2 ...
+

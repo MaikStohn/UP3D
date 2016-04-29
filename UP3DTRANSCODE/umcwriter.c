@@ -437,8 +437,9 @@ void umcwriter_set_bed_temp(int32_t temp, bool wait)
     _umcwriter_write_file(&blk, 1);
 
     umcwriter_set_report_data(-1,-1);
+
+    umcwriter_bed_temp = temp;
   }
-  umcwriter_bed_temp = temp;
 }
 
 void umcwriter_set_report_data(int32_t layer, double height)
