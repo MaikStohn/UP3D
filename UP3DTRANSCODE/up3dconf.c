@@ -23,8 +23,7 @@ settings_t settings;
 settings_t settings_mini = { 
   .steps_per_mm = { 854.0 * 512, 854.0 * 512, 854.0 * 512 },
   .max_rate = { 200, 200, 50 },
-  .acceleration = { 3000, 3000, 300 },
-  .max_travel = { 122.0, 122.0, 100000000.0 },
+  .acceleration = { 2000, 2000, 300 },
   .junction_deviation = 0.05,
   .x_axes =  1, .y_axes =  0,
   .x_dir  =  1, .y_dir  = -1, .z_dir  = -1,
@@ -36,8 +35,7 @@ settings_t settings_mini = {
 settings_t settings_classic_plus = { 
   .steps_per_mm = { 644.0 * 512, 644.0 * 512, 854.0 * 512 },
   .max_rate = { 200, 200, 50 },
-  .acceleration = { 3000, 3000, 300 },
-  .max_travel = { 142.0, 142.0, 100000000.0 },
+  .acceleration = { 2000, 2000, 300 },
   .junction_deviation = 0.05,
   .x_axes =  1, .y_axes =  0,
   .x_dir  =  1, .y_dir  = -1, .z_dir  = -1,
@@ -49,8 +47,7 @@ settings_t settings_classic_plus = {
 settings_t settings_box = { 
   .steps_per_mm = { 644.0 * 512, 644.0 * 512, 854.0 * 512 },
   .max_rate = { 200, 200, 50 },
-  .acceleration = { 3000, 3000, 300 },
-  .max_travel = { 264.0, 212.0, 100000000.0 },
+  .acceleration = { 2000, 2000, 300 },
   .junction_deviation = 0.05,
   .x_axes =  1, .y_axes =  0,
   .x_dir  = -1, .y_dir  =  1, .z_dir  = -1,

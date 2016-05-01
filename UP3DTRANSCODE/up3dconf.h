@@ -38,7 +38,6 @@ typedef struct {
   double steps_per_mm[N_AXIS];
   double max_rate[N_AXIS];
   double acceleration[N_AXIS];
-  double max_travel[N_AXIS];
   double junction_deviation;
   int    x_axes;
   int    y_axes;
