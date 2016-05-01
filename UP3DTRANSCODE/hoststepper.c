@@ -139,8 +139,8 @@ bool st_get_next_segment_up3d(segment_up3d_t** ppseg)
 
 void st_create_segment_up3d(double t, double v_entry, double v_exit)
 {
-  double vm = max(300,min(6000,max(v_entry,v_exit))); //6000*8 => 48000 max, 300*8 => 2400 min, ?maybe this can be a bit smaller?
-  int64_t p1 = (uint64_t)(t*vm*8+1);
+  double vm = max(100,min(600,max(v_entry,v_exit))); //600 => 8000 max, 100 => 1500 min, can be smaller ?
+  int64_t p1 = (uint32_t)(t*vm*15+1);
   int64_t p2;
 
   for(;;)
