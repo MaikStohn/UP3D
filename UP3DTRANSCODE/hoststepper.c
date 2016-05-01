@@ -161,9 +161,9 @@ void st_create_segment_up3d(double t, double v_entry, double v_exit)
     double linear_y = v_entry*t*pl_block->factor[Y_AXIS];
     double linear_a = v_entry*t*pl_block->factor[A_AXIS];
     
-    double acceld_x = (v_exit-v_entry)*t*pl_block->factor[X_AXIS];
-    double acceld_y = (v_exit-v_entry)*t*pl_block->factor[Y_AXIS];
-    double acceld_a = (v_exit-v_entry)*t*pl_block->factor[A_AXIS];
+    double acceld_x = (v_exit-v_entry)/2*t*pl_block->factor[X_AXIS];
+    double acceld_y = (v_exit-v_entry)/2*t*pl_block->factor[Y_AXIS];
+    double acceld_a = (v_exit-v_entry)/2*t*pl_block->factor[A_AXIS];
     
     int64_t p3 = (int64_t)(linear_x/p1);
     int64_t p4 = (int64_t)(linear_y/p1);
@@ -176,9 +176,9 @@ void st_create_segment_up3d(double t, double v_entry, double v_exit)
     if( v_entry != v_exit )
     {
       //acceleration ==> needs correction of v_entry ==> linear dist !
-      p3 += (int64_t)((acceld_x/2-p6*p1*p1/2)/p1);
-      p4 += (int64_t)((acceld_y/2-p7*p1*p1/2)/p1);
-      p5 += (int64_t)((acceld_a/2-p8*p1*p1/2)/p1);
+      p3 += (int64_t)((acceld_x-p6*p1*p1/2)/p1);
+      p4 += (int64_t)((acceld_y-p7*p1*p1/2)/p1);
+      p5 += (int64_t)((acceld_a-p8*p1*p1/2)/p1);
     }
     
     if( (p3<-32767) || (p3>32767) || (p4<-32767) || (p4>32767) || (p5<-32767) || (p5>32767) ||
@@ -195,9 +195,9 @@ void st_create_segment_up3d(double t, double v_entry, double v_exit)
     int64_t sa = floor((float)((p5*p1+p8*p1*p1/2))/512)*512;
     
     //calculate mcu rounding error compared to real xsteps required
-    g_ex += linear_x + acceld_x/2 - sx;
-    g_ey += linear_y + acceld_y/2 - sy;
-    g_ea += linear_a + acceld_a/2 - sa;
+    g_ex += linear_x + acceld_x - sx;
+    g_ey += linear_y + acceld_y - sy;
+    g_ea += linear_a + acceld_a - sa;
     
     //compensate rounding errors by adding it to initial speed values
     int64_t ex = g_ex/p1; if((p3+ex)>32767){ex=32767-p3;} if((p3+ex)<-32767){ex=-32767-p3;} p3+=ex; g_ex-=ex*p1;
