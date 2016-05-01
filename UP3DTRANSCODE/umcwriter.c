@@ -459,10 +459,10 @@ void umcwriter_set_report_data(int32_t layer, double height)
     _umcwriter_write_file(&blk, 1);
   }
 
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_PERCENT,0);
+  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_TIME_REMAIN,(int32_t)umcwriter_print_time);
   _umcwriter_write_file(&blk, 1);
 
-  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_TIME_REMAIN,(int32_t)umcwriter_print_time);
+  UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_PERCENT,0);
   _umcwriter_write_file(&blk, 1);
 }
 
