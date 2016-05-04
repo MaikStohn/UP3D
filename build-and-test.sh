@@ -59,17 +59,17 @@ mkdir -p $DESTDIR
 
 if [ "$OSTYPE" == "msys" ]; then
     OS="WIN"
-    cp UP3DTOOLS/upinfo.exe $DESTDIR
-    cp UP3DTOOLS/upload.exe $DESTDIR
-    cp UP3DTOOLS/upshell.exe $DESTDIR
+    cp UP3DTOOLS/up3dinfo.exe $DESTDIR
+    cp UP3DTOOLS/up3dload.exe $DESTDIR
+    cp UP3DTOOLS/up3dshell.exe $DESTDIR
     cp UP3DTRANSCODE/up3dtranscode.exe $DESTDIR
 else
     if [[ $OSTYPE =~ darwin.* ]]; then
         OS="MAC"
     fi
-    cp UP3DTOOLS/upinfo $DESTDIR
-    cp UP3DTOOLS/upload $DESTDIR
-    cp UP3DTOOLS/upshell $DESTDIR
+    cp UP3DTOOLS/up3dinfo $DESTDIR
+    cp UP3DTOOLS/up3dload $DESTDIR
+    cp UP3DTOOLS/up3dshell $DESTDIR
     cp UP3DTRANSCODE/up3dtranscode $DESTDIR
 fi
 
