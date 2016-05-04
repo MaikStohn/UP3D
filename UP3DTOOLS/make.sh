@@ -16,26 +16,26 @@ if [[ "$OSTYPE" == "msys" ]]; then
 $CC -Os -std=c99 -static \
     -D_BSD_SOURCE \
     -I../UP3DCOMMON/ \
-    -o upload.exe ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upload.c \
+    -o up3dload.exe ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upload.c \
     -lusb-1.0
 
-$STRIP upload.exe
+$STRIP up3dload.exe
 
 $CC -Os -std=c99 -static \
     -D_BSD_SOURCE \
     -I../UP3DCOMMON/ \
-    -o upinfo.exe ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upinfo.c \
+    -o up3dinfo.exe ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upinfo.c \
     -lusb-1.0
 
-$STRIP upinfo.exe
+$STRIP up3dinfo.exe
 
 $CC -Os -std=c99 -static \
     -D_BSD_SOURCE \
     -I../UP3DCOMMON/ \
-    -o upshell.exe ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upshell.c \
+    -o up3dshell.exe ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upshell.c \
     -lusb-1.0 -lncurses
 
-$STRIP upshell.exe
+$STRIP up3dshell.exe
 
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 
@@ -48,9 +48,9 @@ $CC -Os -Wall \
     -I../UP3DCOMMON/ \
     -lobjc \
     `pkg-config --libs-only-L libusb-1.0|cut -c3-`/libusb-1.0.a \
-    -o upload ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upload.c
+    -o up3dload ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upload.c
 
-$STRIP upload
+$STRIP up3dload
 
 $CC -Os -Wall \
     -framework IOKit \
@@ -59,9 +59,9 @@ $CC -Os -Wall \
     -I../UP3DCOMMON/ \
     -lobjc \
     `pkg-config --libs-only-L libusb-1.0|cut -c3-`/libusb-1.0.a \
-    -o upinfo ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upinfo.c
+    -o up3dinfo ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upinfo.c
 
-$STRIP upinfo
+$STRIP up3dinfo
 
 $CC -Os -Wall \
     -framework IOKit \
@@ -71,9 +71,9 @@ $CC -Os -Wall \
     -lobjc \
     -lncurses \
     `pkg-config --libs-only-L libusb-1.0|cut -c3-`/libusb-1.0.a \
-    -o upshell ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upshell.c
+    -o up3dshell ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upshell.c
 
-$STRIP upshell
+$STRIP up3dshell
 
 elif [[ "$OSTYPE" == "linux-gnu" ]]; then
 
@@ -82,25 +82,25 @@ elif [[ "$OSTYPE" == "linux-gnu" ]]; then
 $CC -Os -std=c99 \
     -D_BSD_SOURCE \
     -I../UP3DCOMMON/ \
-    -o upload ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upload.c \
+    -o up3dload ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upload.c \
     -lusb-1.0 -lpthread -lm
 
-$STRIP upload
+$STRIP up3dload
 
 $CC -Os -std=c99 \
     -D_BSD_SOURCE \
     -I../UP3DCOMMON/ \
-    -o upinfo ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upinfo.c \
+    -o up3dinfo ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upinfo.c \
     -lusb-1.0 -lpthread -lm
 
-$STRIP upinfo
+$STRIP up3dinfo
 
 $CC -Os -std=c99 \
     -D_BSD_SOURCE \
     -I../UP3DCOMMON/ \
-    -o upshell ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upshell.c \
+    -o up3dshell ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upshell.c \
     -lusb-1.0 -lpthread -lncurses -lm
 
-$STRIP upshell
+$STRIP up3dshell
 
 fi
