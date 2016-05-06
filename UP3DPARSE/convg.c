@@ -132,7 +132,7 @@ void _dat_cmd_MoveF( float speed1, float pos1, float speed2, float pos2, bool is
   }
 }
 
-void _dat_cmd_MoveL( int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6, int16_t p7, int16_t p8 )
+void _dat_cmd_MoveL( uint16_t p1, uint16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6, int16_t p7, int16_t p8 )
 {
   int32_t sx = floor((float)((p3*p1+p6*p1*p1/2))/512);
   int32_t sy = floor((float)((p4*p1+p7*p1*p1/2))/512);
@@ -154,7 +154,7 @@ void _dat_cmd_MoveL( int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5,
 
     if( p1>1 )
     {
-      double t = ((double)p2*p1)/50000000;
+      double t = ((double)p2*(double)p1)/50000000.0;
     
       double fx = fabs(r1/t);
       double fy = fabs(r2/t);
@@ -164,7 +164,7 @@ void _dat_cmd_MoveL( int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5,
       if( fy>f ) f = fy;
       if( fa>f ) f = fa;
     
-      int32_t feed = f*60;
+      int32_t feed = f*60.0;
     
       if( _lastFeed != feed )
       {
