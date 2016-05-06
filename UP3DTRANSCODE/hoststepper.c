@@ -139,97 +139,83 @@ bool st_get_next_segment_up3d(segment_up3d_t** ppseg)
 
 void st_create_segment_up3d(double t, double v_entry, double v_exit)
 {
-  double vm = max(100,min(600,max(v_entry,v_exit))); //600 => 8000 max, 100 => 1500 min, can be smaller ?
-  int64_t p1 = (uint32_t)(t*vm*15+1);
-  int64_t p2;
-
+  //==> tmax = 65535*65535 / 50000000 = 85.8 sec. per segment
+  int64_t p1 = 1+(int64_t)(t*F_CPU)/65535;
   for(;;)
   {
-    p2 = (int64_t)(t*F_CPU/p1);
+    int64_t p2 = (int64_t)(t*F_CPU/p1);
+
+    //minimum timer value UP CPU can use is 100
+    if( p2<100 ) p2=100;
     
-    //minimum timer value is 100
-    if( p2<100 )
-      p2=100;
-    //maximum value is 65535
-    if( p2>65535)
-    {
-      p1++;
-      continue;
-    }
+    //s = v*t
+    //s linear speed
+    double s_x = v_entry*t*pl_block->factor[X_AXIS];
+    double s_y = v_entry*t*pl_block->factor[Y_AXIS];
+    double s_a = v_entry*t*pl_block->factor[A_AXIS];
     
-    double linear_x = v_entry*t*pl_block->factor[X_AXIS];
-    double linear_y = v_entry*t*pl_block->factor[Y_AXIS];
-    double linear_a = v_entry*t*pl_block->factor[A_AXIS];
-    
-    double acceld_x = (v_exit-v_entry)/2*t*pl_block->factor[X_AXIS];
-    double acceld_y = (v_exit-v_entry)/2*t*pl_block->factor[Y_AXIS];
-    double acceld_a = (v_exit-v_entry)/2*t*pl_block->factor[A_AXIS];
-    
-    int64_t p3 = (int64_t)(linear_x/p1);
-    int64_t p4 = (int64_t)(linear_y/p1);
-    int64_t p5 = (int64_t)(linear_a/p1);
-    
-    int64_t p6 = (int64_t)(acceld_x/(p1*p1));
-    int64_t p7 = (int64_t)(acceld_y/(p1*p1));
-    int64_t p8 = (int64_t)(acceld_a/(p1*p1));
-    
-    if( v_entry != v_exit )
-    {
-      //acceleration ==> needs correction of v_entry ==> linear dist !
-      p3 += (int64_t)((acceld_x-p6*p1*p1/2)/p1);
-      p4 += (int64_t)((acceld_y-p7*p1*p1/2)/p1);
-      p5 += (int64_t)((acceld_a-p8*p1*p1/2)/p1);
-    }
-    
+    //s acceleration
+    double sa_x = (v_exit-v_entry)*t*pl_block->factor[X_AXIS];
+    double sa_y = (v_exit-v_entry)*t*pl_block->factor[Y_AXIS];
+    double sa_a = (v_exit-v_entry)*t*pl_block->factor[A_AXIS];
+
+    int64_t p6 = (int64_t)(sa_x/(p1*p1));
+    int64_t p7 = (int64_t)(sa_y/(p1*p1));
+    int64_t p8 = (int64_t)(sa_a/(p1*p1));
+
+    int64_t p3 = (int64_t)(s_x/p1) + (int64_t)((sa_x-p6*p1*p1)/2/p1);
+    int64_t p4 = (int64_t)(s_y/p1) + (int64_t)((sa_y-p7*p1*p1)/2/p1);
+    int64_t p5 = (int64_t)(s_a/p1) + (int64_t)((sa_a-p8*p1*p1)/2/p1);
+
+    //test format limits
     if( (p3<-32767) || (p3>32767) || (p4<-32767) || (p4>32767) || (p5<-32767) || (p5>32767) ||
-       (p6<-32767) || (p6>32767) || (p7<-32767) || (p7>32767) || (p8<-32767) || (p8>32767) )
+        (p6<-32767) || (p6>32767) || (p7<-32767) || (p7>32767) || (p8<-32767) || (p8>32767) )
     {
-      //test format limits, increase segment steps if overfolow
-      p1++;
+      p1++;           //increase segment repeat count and try again
       continue;
     }
-    
+
     //calculate xsteps generated like mcu in printer (THERE IS A BAD *FLOOR* ROUNDING INSIDE!)
     int64_t sx = floor((float)((p3*p1+p6*p1*p1/2))/512)*512;
     int64_t sy = floor((float)((p4*p1+p7*p1*p1/2))/512)*512;
     int64_t sa = floor((float)((p5*p1+p8*p1*p1/2))/512)*512;
     
     //calculate mcu rounding error compared to real xsteps required
-    g_ex += linear_x + acceld_x - sx;
-    g_ey += linear_y + acceld_y - sy;
-    g_ea += linear_a + acceld_a - sa;
-    
+    g_ex += s_x + sa_x/2 - sx;
+    g_ey += s_y + sa_y/2 - sy;
+    g_ea += s_a + sa_a/2 - sa;
+
     //compensate rounding errors by adding it to initial speed values
     int64_t ex = g_ex/p1; if((p3+ex)>32767){ex=32767-p3;} if((p3+ex)<-32767){ex=-32767-p3;} p3+=ex; g_ex-=ex*p1;
     int64_t ey = g_ey/p1; if((p4+ey)>32767){ey=32767-p4;} if((p4+ey)<-32767){ey=-32767-p4;} p4+=ey; g_ey-=ey*p1;
     int64_t ea = g_ea/p1; if((p5+ea)>32767){ea=32767-p5;} if((p5+ea)<-32767){ea=-32767-p5;} p5+=ea; g_ea-=ea*p1;
-    
+
     // add new segment
     segment_up3d_t *seg = &segment_buffer[segment_buffer_head];
     seg->p1 = p1; seg->p2 = p2; seg->p3 = p3; seg->p4 = p4; seg->p5 = p5; seg->p6 = p6; seg->p7 = p7; seg->p8 = p8;
-    
+
     // increment segment buffer indices
     segment_buffer_head = segment_next_head;
     if ( ++segment_next_head == SEGMENT_BUFFER_SIZE ) { segment_next_head = 0; }
-    
+
 #ifdef X_INSERT_STEP_CORRECTIONS
     //check if mcu rounding error is big enough to issue fast steps to compensate
-    if( (abs(g_ex)>511) || (abs(g_ey)>511) || (abs(g_ea)>511) )
+    if( (llabs(g_ex)>511) || (llabs(g_ey)>511) || (llabs(g_ea)>511) )
     {
       // add missing steps to a "tiny segment, fast" new segment with almost no time
       segment_up3d_t *seg = &segment_buffer[segment_buffer_head];
       seg->p1 = 1; seg->p2 = 100;
-      if( abs(g_ex)>511 ) {seg->p3 = (g_ex/512)*512; g_ex-=seg->p3;} else seg->p3=0;
-      if( abs(g_ey)>511 ) {seg->p4 = (g_ey/512)*512; g_ey-=seg->p4;} else seg->p4=0;
-      if( abs(g_ea)>511 ) {seg->p5 = (g_ea/512)*512; g_ea-=seg->p5;} else seg->p5=0;
+      if( llabs(g_ex)>511 ) {seg->p3 = (g_ex/512)*512; g_ex-=seg->p3;} else seg->p3=0;
+      if( llabs(g_ey)>511 ) {seg->p4 = (g_ey/512)*512; g_ey-=seg->p4;} else seg->p4=0;
+      if( llabs(g_ea)>511 ) {seg->p5 = (g_ea/512)*512; g_ea-=seg->p5;} else seg->p5=0;
       seg->p6 = 0; seg->p7 = 0; seg->p8 = 0;
       
       // increment segment buffer indices
       segment_buffer_head = segment_next_head;
       if ( ++segment_next_head == SEGMENT_BUFFER_SIZE ) { segment_next_head = 0; }
     }
-#endif 
-
+#endif
+    
     //always leave
     break;
   }
