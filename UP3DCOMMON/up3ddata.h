@@ -350,7 +350,7 @@ void UP3D_PROG_BLK_Pause( UP3D_BLK *pupblk, uint32_t msec );
 void UP3D_PROG_BLK_SetParameter( UP3D_BLK *pupblk, uint8_t parameter, int32_t value );
 void UP3D_PROG_BLK_Home( UP3D_BLK pupblks[2], UP3D_AXIS axis, float direction, float offset, float speed );
 void UP3D_PROG_BLK_MoveF( UP3D_BLK pupblks[2], float speedX, float posX, float speedY, float posY, float speedZ, float posZ, float speedA, float posA );
-void UP3D_PROG_BLK_MoveL( UP3D_BLK *pupblk, short p1, short p2, short p3, short p4, short p5, short p6, short p7, short p8);
+void UP3D_PROG_BLK_MoveL( UP3D_BLK *pupblk, uint16_t p1, uint16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6, int16_t p7, int16_t p8);
 void UP3D_PROG_BLK_WaitIfNot( UP3D_BLK *pupblk, uint8_t parameter, int32_t value, char compchar );
 
 #endif //_UP3DDATA_H_

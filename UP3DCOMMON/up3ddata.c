@@ -75,7 +75,7 @@ void UP3D_PROG_BLK_MoveF( UP3D_BLK pupblks[2], float speedX, float posX, float s
   pupblks[1].pcmd=UP3DPCMD_MoveF; pupblks[1].pdat1.f=speedZ; pupblks[1].pdat2.f=posZ; pupblks[1].pdat3.f=speedA; pupblks[1].pdat4.f=posA;
 }
 
-void UP3D_PROG_BLK_MoveL( UP3D_BLK *pupblk, short p1, short p2, short p3, short p4, short p5, short p6, short p7, short p8)
+void UP3D_PROG_BLK_MoveL( UP3D_BLK *pupblk, uint16_t p1, uint16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6, int16_t p7, int16_t p8)
 {
   memset( pupblk, 0, sizeof(UP3D_BLK) );
   pupblk->pcmd=UP3DPCMD_MoveL; 
