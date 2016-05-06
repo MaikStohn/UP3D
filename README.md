@@ -24,17 +24,25 @@ example: up3dtranscode mini input.gcode output.umc 123.1
 ```
 ---
 
-## upload: 
+## up3dload: 
 
 UpMachineCode (UMC) uploader, sends the umc file to printer and starts a print
 ```
-Usage: upload output.umc
+Usage: up3dload output.umc
 ```
 ---
 
-## upshell: 
+## up3dshell: 
 
 Interactive printer monitor and debugging tool, use to watch printing
 ```
-Usage: upshell
+Usage: up3dshell
+```
+---
+
+## up3dinfo: 
+
+Program to show the details of the connected UP printer
+```
+Usage: up3dinfo
 ```
