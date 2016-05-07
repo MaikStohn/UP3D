@@ -302,7 +302,14 @@ void umcwriter_planner_set_position(double X, double Y, double A)
   pos[2] = A;
   plan_set_position(pos);
   st_reset();
+}
 
+void umcwriter_planner_set_a_position(double A)
+{
+  double pos[3];
+  plan_get_position(pos);
+  pos[2] = A;
+  plan_set_position(pos);
 }
 
 void umcwriter_planner_add(double X, double Y, double A, double F)

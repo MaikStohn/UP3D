@@ -198,7 +198,11 @@ bool gcp_process_line(const char* gcodeline)
           if(yb) gcp_Y=yv;
           if(zb) gcp_Z=zv;
           if(eb) gcp_E=ev;
-          umcwriter_planner_set_position(gcp_X,gcp_Y,gcp_E);
+          if( xb || yb )
+            umcwriter_planner_set_position(gcp_X,gcp_Y,gcp_E);
+          else if(eb)
+            umcwriter_planner_set_a_position(gcp_E);
+            
         }
         break;
  
