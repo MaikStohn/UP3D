@@ -181,14 +181,24 @@ void st_create_segment_up3d(double t, double v_entry, double v_exit)
     int64_t sa = floor((float)((p5*p1+p8*p1*p1/2))/512)*512;
     
     //calculate mcu rounding error compared to real xsteps required
+    int64_t t_ex = g_ex + s_x + sa_x/2 - sx;
+    int64_t t_ey = g_ey + s_y + sa_y/2 - sy;
+    int64_t t_ea = g_ea + s_a + sa_a/2 - sa;
+
+    //compensate rounding errors by adding it to initial speed values
+    int64_t ex = t_ex/p1; if((p3+ex)>32767){ex=32767-p3;} if((p3+ex)<-32767){ex=-32767-p3;} p3+=ex;
+    int64_t ey = t_ey/p1; if((p4+ey)>32767){ey=32767-p4;} if((p4+ey)<-32767){ey=-32767-p4;} p4+=ey;
+    int64_t ea = t_ea/p1; if((p5+ea)>32767){ea=32767-p5;} if((p5+ea)<-32767){ea=-32767-p5;} p5+=ea;
+
+    //calculate xsteps generated like mcu (again)
+    sx = floor((float)((p3*p1+p6*p1*p1/2))/512)*512;
+    sy = floor((float)((p4*p1+p7*p1*p1/2))/512)*512;
+    sa = floor((float)((p5*p1+p8*p1*p1/2))/512)*512;
+
+    //calculate remaining mcu rounding error compared to real xsteps required
     g_ex += s_x + sa_x/2 - sx;
     g_ey += s_y + sa_y/2 - sy;
     g_ea += s_a + sa_a/2 - sa;
-
-    //compensate rounding errors by adding it to initial speed values
-    int64_t ex = g_ex/p1; if((p3+ex)>32767){ex=32767-p3;} if((p3+ex)<-32767){ex=-32767-p3;} p3+=ex; g_ex-=ex*p1;
-    int64_t ey = g_ey/p1; if((p4+ey)>32767){ey=32767-p4;} if((p4+ey)<-32767){ey=-32767-p4;} p4+=ey; g_ey-=ey*p1;
-    int64_t ea = g_ea/p1; if((p5+ea)>32767){ea=32767-p5;} if((p5+ea)<-32767){ea=-32767-p5;} p5+=ea; g_ea-=ea*p1;
 
     // add new segment
     segment_up3d_t *seg = &segment_buffer[segment_buffer_head];
