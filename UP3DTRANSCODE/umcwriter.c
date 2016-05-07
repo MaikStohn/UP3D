@@ -245,8 +245,9 @@ void umcwriter_virtual_home(double speedX, double speedY, double speedZ)
   umcwriter_print_time += 5; //apx. 5 seconds for virtual homeing
 
   double speed[2];
-  speed[settings.x_axes] = speedX;
-  speed[settings.y_axes] = speedY;
+  speed[settings.x_axes] = min(speedX,settings.max_rate[settings.x_axes]*60.0 );
+  speed[settings.y_axes] = min(speedY,settings.max_rate[settings.y_axes]*60.0 );
+  speedZ = min( speedZ, 50.0*60.0 );
 
   UP3D_BLK blks[2];
   UP3D_PROG_BLK_MoveF( blks, -speed[0],0, -speed[1],0, -speedZ,0, 0,0);
