@@ -259,11 +259,10 @@ void umcwriter_move_direct(double X, double Y, double Z, double A, double F)
 {
   umcwriter_planner_sync();
 
-  //TODO: ??? calc X/Y/Z/E speeds to make linear move
-  double feedX = F;// /60;
-  double feedY = F;// /60;
-  double feedZ = F;// /60;
-  double feedA = F;// /60;
+  double feedX = F;
+  double feedY = F;
+  double feedZ = F;
+  double feedA = F;
 
   double pos[3];
   plan_get_position(pos);
