@@ -180,7 +180,7 @@ bool gcp_process_line(const char* gcodeline)
           if(xp){ gcp_X=0; }
           if(yp){ gcp_Y=0; }
           if(zp){ gcp_Z=0; }
-          umcwriter_virtual_home(xp?10000:0,yp?10000:0,zp?10000:0);
+          umcwriter_virtual_home(xp?100*60:0,yp?100*60:0,zp?50*60:0);
         }
         break;
 
