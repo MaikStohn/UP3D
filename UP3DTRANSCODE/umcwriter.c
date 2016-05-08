@@ -335,21 +335,13 @@ void umcwriter_planner_add(double X, double Y, double A, double F)
 void umcwriter_planner_sync()
 {
   segment_up3d_t *pseg;
-  bool wait = false;
   while( st_get_next_segment_up3d(&pseg) )
   {
-    wait = true;
     umcwriter_print_time += ((double)pseg->p2*(double)pseg->p1)/F_CPU;
 
     UP3D_BLK blk;
     UP3D_PROG_BLK_MoveL(&blk,pseg->p1,pseg->p2,pseg->p3,pseg->p4,pseg->p5,pseg->p6,pseg->p7,pseg->p8);
     _umcwriter_write_file(&blk, 1);
-  }
-  
-  if( wait )
-  {
-    //up software always adds a small delay (1msec), right before starting a new direct move or anything else
-    umcwriter_pause(1);
   }
 }
 
