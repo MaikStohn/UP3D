@@ -180,6 +180,9 @@ void st_create_segment_up3d(double t, double v_entry, double v_exit)
       int64_t sy = floor((float)((p4*p1+p7*p1*p1/2))/512)*512;
       int64_t sa = floor((float)((p5*p1+p8*p1*p1/2))/512)*512;
 
+      //only compensate errors when accelerating or moving
+      if( v_entry >= v_exit )
+      {
         //calculate mcu rounding error compared to real xsteps required
         int64_t t_ex = g_ex + s_x + sa_x/2 - sx;
         int64_t t_ey = g_ey + s_y + sa_y/2 - sy;
@@ -194,6 +197,7 @@ void st_create_segment_up3d(double t, double v_entry, double v_exit)
         sx = floor((float)((p3*p1+p6*p1*p1/2))/512)*512;
         sy = floor((float)((p4*p1+p7*p1*p1/2))/512)*512;
         sa = floor((float)((p5*p1+p8*p1*p1/2))/512)*512;
+      }
       
       //add remaining mcu rounding error compared to real xsteps
       g_ex += s_x + sa_x/2 - sx;
