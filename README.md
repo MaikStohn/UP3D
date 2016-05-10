@@ -1,9 +1,7 @@
-# UP3D
+# UP3D [![License](http://img.shields.io/:license-gpl2-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-2.0.html) [![Build Status](https://travis-ci.org/MaikStohn/UP3D.svg?branch=master)](https://travis-ci.org/MaikStohn/UP3D) [![Downloads](https://img.shields.io/github/downloads/MaikStohn/UP3D/total.svg?maxAge=3600)](https://github.com/MaikStohn/UP3D/releases/latest)
 UP 3D Printer Tools
 
-Build status of MaikStohn/UP3D: [![Build Status](https://travis-ci.org/MaikStohn/UP3D.svg?branch=master)](https://travis-ci.org/MaikStohn/UP3D)
-
-Download: [latest](https://github.com/MaikStohn/UP3D/releases/latest)
+Download: [![Release](https://img.shields.io/github/release/MaikStohn/UP3D.svg?maxAge=3600)](https://github.com/MaikStohn/UP3D/releases/latest)
 
 Instructions: [up3dtools-how-to](http://stohn.de/3d/index.php/2016/03/10/up3dtools-little-how-to)
 
