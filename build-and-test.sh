@@ -15,6 +15,7 @@ if [ "_$TRAVIS_OS_NAME" = "_osx" ]; then
     brew install $PACKAGES_INSTALL || true
 else
 	#DEBIAN DEPENDENCIES
+    sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 1397BC53640DB551
     sudo apt-get update -qq
     sudo apt-get install -qq -y $PACKAGES_INSTALL
 fi
