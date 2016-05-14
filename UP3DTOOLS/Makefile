@@ -28,6 +28,10 @@ up3dload: $(OBJ_UPLOAD)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o up3dload $(OBJ_UPLOAD) $(LIBS)
 
 up3dshell: $(OBJ_SHELL)
+	@echo "--------------- FIXME: -lncurses should be in CFLAGS / LDFLAGS / LIBS ??"
+	@echo "--------------- FIXME: -lncurses should be in CFLAGS / LDFLAGS / LIBS ??"
+	@echo "--------------- FIXME: -lncurses should be in CFLAGS / LDFLAGS / LIBS ??"
+	@echo "--------------- FIXME: -lncurses should be in CFLAGS / LDFLAGS / LIBS ??"
 	$(CC) $(CFLAGS) $(LDFLAGS) -o up3dshell $(OBJ_SHELL) $(LIBS) -lncurses
 
 up3dinfo: $(OBJ_INFO)
