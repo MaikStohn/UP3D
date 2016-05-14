@@ -19,7 +19,10 @@ OBJ_UPLOAD=$(subst .c,.o,$(SRC_UPLOAD))
 SRC_SHELL=upshell.c $(SRC_COMMON)
 OBJ_SHELL=$(subst .c,.o,$(SRC_SHELL))
 
-all: up3dload up3dshell
+SRC_INFO=upinfo.c $(SRC_COMMON)
+OBJ_INFO=$(subst .c,.o,$(SRC_INFO))
+
+all: up3dload up3dshell up3dinfo
 
 up3dload: $(OBJ_UPLOAD)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o up3dload $(OBJ_UPLOAD) $(LIBS)
@@ -27,10 +30,15 @@ up3dload: $(OBJ_UPLOAD)
 up3dshell: $(OBJ_SHELL)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o up3dshell $(OBJ_SHELL) $(LIBS) -lncurses
 
+up3dinfo: $(OBJ_INFO)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o up3dinfo $(OBJ_INFO) $(LIBS)
+
 clean:
 	$(RM) $(OBJ_UPLOAD)
 	$(RM) $(OBJ_SHELL)
+	$(RM) $(OBJ_INFO)
 	$(RM) up3dload
 	$(RM) up3dshell
+	$(RM) up3dinfo
 
 dist-clean: clean
