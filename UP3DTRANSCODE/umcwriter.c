@@ -428,6 +428,8 @@ void umcwriter_set_bed_temp(int32_t temp, bool wait)
 
 void umcwriter_set_report_data(int32_t layer, double height)
 {
+  umcwriter_planner_sync();
+
   UP3D_BLK blk;
 
   if( layer>=0 )
