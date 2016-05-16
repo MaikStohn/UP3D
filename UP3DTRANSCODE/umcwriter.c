@@ -63,6 +63,9 @@ bool umcwriter_init(const char* filename, const double heightZ, const char machi
   UP3D_PROG_BLK_Power(&blk,true);
   _umcwriter_write_file(&blk, 1);
 
+  UP3D_PROG_BLK_Beeper(&blk,false);
+  _umcwriter_write_file(&blk, 1);
+  
   umcwriter_pause(4000); //wait for power on complete and temperature measurement to stabilize
 
   UP3D_PROG_BLK_SetParameter(&blk,0x41,0);              //TEMP FOR NOZZLE1 TEMP REACHED
