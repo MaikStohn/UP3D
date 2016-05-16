@@ -338,9 +338,9 @@ void umcwriter_planner_add(double X, double Y, double A, double F)
 void umcwriter_planner_sync()
 {
   segment_up3d_t *pseg;
-  while( plan_get_block_buffer_count() )
+  for(;;)
   {
-    if( st_get_next_segment_up3d(&pseg) )
+    while( st_get_next_segment_up3d(&pseg) )
     {
       umcwriter_print_time += ((double)pseg->p2*(double)pseg->p1)/F_CPU;
 
@@ -348,6 +348,9 @@ void umcwriter_planner_sync()
       UP3D_PROG_BLK_MoveL(&blk,pseg->p1,pseg->p2,pseg->p3,pseg->p4,pseg->p5,pseg->p6,pseg->p7,pseg->p8);
       _umcwriter_write_file(&blk, 1);
     }
+    
+    if( 0 == plan_get_block_buffer_count() )
+      break;
   }
 }
 
