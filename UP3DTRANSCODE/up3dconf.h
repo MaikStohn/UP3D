@@ -79,21 +79,6 @@ extern settings_t settings_box;
 // machines, perhaps to 0.1mm/min, but your success may vary based on multiple factors.
 #define MINIMUM_FEED_RATE 1.0 // (mm/min)
 
-// The temporal resolution of the acceleration management subsystem. A higher number gives smoother
-// acceleration, particularly noticeable on machines that run at very high feedrates, but may negatively
-// impact performance. The correct value for this parameter is machine dependent, so it's advised to
-// set this only as high as needed. Approximate successful values can widely range from 50 to 200 or more.
-// NOTE: Changing this value also changes the execution time of a segment in the step segment buffer..
-// When increasing this value, this stores less overall time in the segment buffer and vice versa. Make
-// certain the step segment buffer is increased/decreased to account for these changes.
-//#define ACCELERATION_TICKS_PER_SECOND 100.0
-//#define ACCELERATION_TICKS_PER_SECOND (0.1/60.0)      //acceleration is handled in machine
-#define ACCELERATION_TICKS_PER_SECOND   (1/(60.0*5.0))  //segment max is 5 seconds
-
-// Conversions
-#define MM_PER_INCH (25.40)
-#define INCH_PER_MM (0.0393701)
-
 // Useful macros
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 #define min(a,b) (((a) < (b)) ? (a) : (b))
