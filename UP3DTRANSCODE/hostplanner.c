@@ -432,6 +432,12 @@ void plan_set_position(double *pos)
     pl.position[idx] = round(pos[idx]*settings.steps_per_mm[idx]);
 }
 
+void plan_set_e_position(double epos)
+{
+  pl.position[A_AXIS] = round(epos*settings.steps_per_mm[A_AXIS]);
+  pl.previous_unit_vec[A_AXIS] = 0;
+}
+
 void plan_get_position(double *pos)
 {
   uint32_t idx;
