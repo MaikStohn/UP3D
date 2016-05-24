@@ -221,7 +221,10 @@ void _st_create_up3d_seg_c(segment_up3d_t* pseg, double v)
   {
     int64_t p2 = (int64_t)(t*F_CPU/p1);
     
-    int64_t p3 = (int64_t)(s_x/p1); int64_t p4 = (int64_t)(s_y/p1); int64_t p5 = (int64_t)(s_a/p1);
+    int64_t p3 = (int64_t)(s_x/p1); if(pl_block->steps[0]<0) p3=0; //take care not to insert REVERSE steps
+    int64_t p4 = (int64_t)(s_y/p1); if(pl_block->steps[1]<0) p4=0; //take care not to insert REVERSE steps
+    int64_t p5 = (int64_t)(s_a/p1); if(pl_block->steps[2]<0) p5=0; //take care not to insert REVERSE steps
+    
     //test format limits
     if( (p3<-32767) || (p3>32767) || (p4<-32767) || (p4>32767) || (p5<-32767) || (p5>32767) )
       continue; //try again (p1 incremeted)
