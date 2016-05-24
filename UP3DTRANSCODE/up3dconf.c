@@ -23,8 +23,8 @@ settings_t settings;
 settings_t settings_mini = { 
   .steps_per_mm = { 854.0, 854.0, 854.0 },
   .max_rate = { 200, 200, 50 },
-  .acceleration = { 1500, 1500, 300 },
-  .junction_deviation = 0.05,
+  .acceleration = { 1500, 1500, 1500 },
+  .junction_deviation = 0.1,
   .x_axes =  1, .y_axes =  0,
   .x_dir  =  1, .y_dir  = -1, .z_dir  = -1,
   .x_hspeed_hi = 50.0, .y_hspeed_hi = 50.0, .z_hspeed_hi = 50.0, .x_hofs_hi =  4.0, .y_hofs_hi =  4.0, .z_hofs_hi =  6.0,
@@ -35,8 +35,8 @@ settings_t settings_mini = {
 settings_t settings_classic_plus = { 
   .steps_per_mm = { 644.0, 644.0, 854.0 },
   .max_rate = { 200, 200, 50 },
-  .acceleration = { 1500, 1500, 300 },
-  .junction_deviation = 0.05,
+  .acceleration = { 1500, 1500, 1500 },
+  .junction_deviation = 0.1,
   .x_axes =  1, .y_axes =  0,
   .x_dir  =  1, .y_dir  = -1, .z_dir  = -1,
   .x_hspeed_hi = 50.0, .y_hspeed_hi = 50.0, .z_hspeed_hi = 50.0, .x_hofs_hi =  4.0, .y_hofs_hi =  4.0, .z_hofs_hi =  6.0,
@@ -47,8 +47,8 @@ settings_t settings_classic_plus = {
 settings_t settings_box = { 
   .steps_per_mm = { 644.0, 644.0, 854.0 },
   .max_rate = { 200, 200, 50 },
-  .acceleration = { 1500, 1500, 300 },
-  .junction_deviation = 0.05,
+  .acceleration = { 1500, 1500, 1500 },
+  .junction_deviation = 0.1,
   .x_axes =  1, .y_axes =  0,
   .x_dir  = -1, .y_dir  =  1, .z_dir  = -1,
   .x_hspeed_hi = 50.0, .y_hspeed_hi = 30.0, .z_hspeed_hi = 30.0, .x_hofs_hi =  4.0, .y_hofs_hi =  4.0, .z_hofs_hi =  6.0,
