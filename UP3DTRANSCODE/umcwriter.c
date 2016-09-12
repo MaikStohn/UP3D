@@ -130,7 +130,7 @@ bool umcwriter_init(const char* filename, const double heightZ, const char machi
   return true;
 }
 
-void umcwriter_finish()
+void umcwriter_finish(bool power_off)
 {
   umcwriter_planner_sync();
 
@@ -179,8 +179,11 @@ void umcwriter_finish()
   UP3D_PROG_BLK_SetParameter(&blk,PARA_REPORT_TIME_REMAIN,0);
   _umcwriter_write_file(&blk, 1);
 
-  UP3D_PROG_BLK_Power(&blk,false);
-  _umcwriter_write_file(&blk, 1);
+  if ( power_off )
+  {
+    UP3D_PROG_BLK_Power(&blk,false);
+    _umcwriter_write_file(&blk, 1);
+  }
 
   UP3D_PROG_BLK_SetParameter(&blk,0x1C,0); //not printing...
   _umcwriter_write_file(&blk, 1);
