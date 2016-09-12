@@ -20,6 +20,10 @@
 
 #define printw_b(...) {attron(A_BOLD);printw(__VA_ARGS__),attroff(A_BOLD);}
 
+#define upl_error(s) { printf("ERROR: %s\n",s); }
+
+float steps[4]; // steps per mm for each axis from printer info
+
 static void update_state(bool redrawall)
 {
   int rows, cols;
@@ -81,7 +85,7 @@ static void update_state(bool redrawall)
 
     printw_b("Pos:");
     int32_t apos = UP3D_GetAxisPosition(m);
-    printw(" %-12d (%-12.3f)", apos, (float)apos / 854.0 );
+    printw(" %-12d (%-12.3f)", apos, (float)apos / steps[m-1] );
   }
 
   attron(A_UNDERLINE);mvhline(9,0,' ',cols);attroff(A_UNDERLINE);
@@ -283,6 +287,23 @@ int main(int argc, char *argv[])
 {
   if( !UP3D_Open() )
     return -1;
+
+  TT_tagPrinterInfoHeader pihdr;
+  TT_tagPrinterInfoName   piname;
+  TT_tagPrinterInfoData   pidata;
+  TT_tagPrinterInfoSet    pisets[8];
+    
+  if( !UP3D_GetPrinterInfo( &pihdr, &piname, &pidata, pisets ) )
+  {
+    upl_error( "UP printer info error\n" );
+    UP3D_Close();
+    return -1;
+  }
+  
+  steps[0] = pidata.f_steps_mm_x;
+  steps[1] = pidata.f_steps_mm_y;
+  steps[2] = pidata.f_steps_mm_z;
+  steps[3] = 1;
 
   signal(SIGINT, sigfinish);   // set sigint handler
 #ifdef SIGWINCH
