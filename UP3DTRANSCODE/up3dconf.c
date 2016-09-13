@@ -56,8 +56,10 @@ settings_t settings_box = {
   .heatbed_wait_factor = 30.0,
 };
 
+// experimental settings for the Cetus3D
+// the steps_per_mm for the extruder has been measured on a prototype
 settings_t settings_cetus = { 
-  .steps_per_mm = { 160.0, 160.0, 160.0 },
+  .steps_per_mm = { 160.0, 160.0, 256.0 },
   .max_rate = { 200, 200, 50 },
   .acceleration = { 1500, 1500, 300 },
   .junction_deviation = 0.05,
