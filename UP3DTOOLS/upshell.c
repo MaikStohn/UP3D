@@ -304,6 +304,9 @@ int main(int argc, char *argv[])
   steps[1] = pidata.f_steps_mm_y;
   steps[2] = pidata.f_steps_mm_z;
   steps[3] = 1;
+  
+  UP3D_SetParameter(0x94,999); //set best accuracy for reporting position
+
 
   signal(SIGINT, sigfinish);   // set sigint handler
 #ifdef SIGWINCH
