@@ -1,4 +1,47 @@
 #! /usr/bin/osascript
+(*
+
+ This scripot uses up3dtranscoder and up3dload from the UP3D project to transcode a gcode file and upload it to the printer.
+ It allows you to automatically transcode the g-code and send it to the 3d printer.
+ When saving the g-code from your slicer (like Slic3r, Cura or Simplify3D) to a specific folder
+ the script starts.
+ 
+ Installation
+ 
+ Open this script via Apple Script-Editor and export it as an program (pup3d.app)
+ Move pup3d.app to the /Applications folder
+
+ In order to make it available for action folder it needs to export this script as an script (pup3d.scpt)
+ in the Apple Script Editor and then move it with the Finder to the final destination:
+ /Library/Scripts/Folder Action Scripts/
+ 
+ The Finder will ask you for your password to confirm the move.
+ You now have two versions of this script, pup3d.app and pup3d.scpt installed in your system.
+ 
+ Next is to configure the folder actions. Follow these steps:
+ - create a folder where you will place your g-code. Name it e.g. 3D_print_jobs (whatever name and location suits you).
+ - right click on the folder and select Services (Dienste) /  Folder Actions configure ... (Ordneraktionen konfigurieren ...)
+ - select the pup3d.scpt you just move to the Folder Action Scripts
+ 
+ When you first launch the script it will ask you to point to the up3dtranscoder and up3dloader program.
+ Next it will ask for the printer model and nozzle height. These parameters gets saved in the defaults of you mac.
+ You can look up the setting in terminal with this command:
+
+ defaults read up3d.co
+
+ and you can reset the defaults if you wish with the follwing command:
+ 
+ defaults delete up3d.com
+ 
+ 
+ How to use
+ 
+ When you save or move files to the folder you configured for the script action the transcoder and uploader
+ will automatically start and ask for some essential settings (nozzle height)
+ 
+The script will only work with file name endings .gcode .gc .g .go
+ 
+*)
 
 property extension_list : {"gcode", "gc", "g", "go"}
 
@@ -19,7 +62,8 @@ on adding folder items to this_folder after receiving added_items
 					if appInstalled is not true then
 						error number -192 -- A resource wasn’t found.	
 						-- no app, no progress bar :(
-						process(this_item)
+						display dialog ("Missing pup3d.app. Please install pup3d.app inside /Applications folder.") with title "Error" buttons {"Cancel"}
+						--process(this_item)
 					end if
 					tell application "Finder" to delete file this_item
 				end if
@@ -108,12 +152,13 @@ on getPrinterModel()
 			end if
 			-- now we use tr to translate the model name to lower case
 			set the model to do shell script ("echo " & quoted form of (model) & " | tr A-Z a-z")
-			if {"mini", "classic", "plus", "box"} contains model then
+			if {"mini", "classic", "plus", "box", "Cetus"} contains model then
 				exit repeat
 			else
-				display dialog ("Unknown UP printer model. Known models are Mini, Classic, Plus, Box.")
+				display dialog ("Unknown UP printer model. Known models are mini, classic, plus, box, Cetus.")
 			end if
 		end repeat
+		if model is equal to "cetus" then set model to "Cetus" -- Cetus needs to be captial  
 		do shell script ("defaults write com.up3d.transcode model " & model)
 	end try
 	return model
