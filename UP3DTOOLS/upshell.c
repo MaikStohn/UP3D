@@ -85,7 +85,7 @@ static void update_state(bool redrawall)
 
     printw_b("Pos:");
     int32_t apos = UP3D_GetAxisPosition(m);
-    printw(" %-12d (%-12.3f)", apos, (float)apos / steps[m-1] );
+    printw(" %-12d (%-12.3f mm)", apos, (float)apos / steps[m-1] );
   }
 
   attron(A_UNDERLINE);mvhline(9,0,' ',cols);attroff(A_UNDERLINE);
@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
   steps[0] = pidata.f_steps_mm_x;
   steps[1] = pidata.f_steps_mm_y;
   steps[2] = pidata.f_steps_mm_z;
-  steps[3] = 1;
+  steps[3] = pidata.f_steps_mm_x == 160.0 ? 256.0 : 854.0; // fix display for Cetus3D
   
   UP3D_SetParameter(0x94,999); //set best accuracy for reporting position
 
