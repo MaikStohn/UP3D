@@ -65,7 +65,7 @@ on adding folder items to this_folder after receiving added_items
 						display dialog ("Missing pup3d.app. Please install pup3d.app inside /Applications folder.") with title "Error" buttons {"Cancel"}
 						--process(this_item)
 					end if
-					tell application "Finder" to delete file this_item
+					--tell application "Finder" to delete file this_item
 				end if
 			end repeat
 		end if
@@ -124,43 +124,34 @@ on process(gcode)
 	end if
 end process
 
-on getHeight()
+on getHeight(model)
 	try
-		set height to do shell script "defaults read com.up3d.transcode nozzle_height"
+		set height to do shell script ("defaults read com.up3d.transcode nozzle_height_" & model)
 	on error
-		set height to 123.45
+		set height to 120.0
 	end try
 	return height
 end getHeight
 
 -- get printer model from defaults. If not defined then ask user for it.
-on getPrinterModel()
-	set model to "Mini"
-	try
-		set model to do shell script ("defaults read com.up3d.transcode model")
-	on error
-		repeat
-			set DlogResult to display dialog ("Please type UP printer model:") Â
-				default answer model Â
-				buttons {"Cancel", "OK"} default button 1 Â
-				with title "UP3D Transcoder"
-			set answer to button returned of DlogResult
-			set model to text returned of DlogResult as text
-			if answer is equal to "Cancel" then
-				-- exit with "User Canceled" 
-				error number -128
-			end if
-			-- now we use tr to translate the model name to lower case
-			set the model to do shell script ("echo " & quoted form of (model) & " | tr A-Z a-z")
-			if {"mini", "classic", "plus", "box", "Cetus"} contains model then
-				exit repeat
-			else
-				display dialog ("Unknown UP printer model. Known models are mini, classic, plus, box, Cetus.")
-			end if
-		end repeat
-		if model is equal to "cetus" then set model to "Cetus" -- Cetus needs to be captial  
+on getPrinterModel(forceToAsk)
+	if forceToAsk is true then
+		set model to "ask"
+	else
+		try
+			set model to do shell script ("defaults read com.up3d.transcode model")
+		on error
+			set model to "ask"
+		end try
+	end if
+	if model is equal to "ask" then
+		set model to choose from list {"mini", "classic", "plus", "box", "Cetus"}
+		if model is false then
+			-- exit with "User Canceled" 
+			error number -128
+		end if
 		do shell script ("defaults write com.up3d.transcode model " & model)
-	end try
+	end if
 	return model
 end getPrinterModel
 
@@ -190,28 +181,34 @@ end getUploader
 
 on transcode(filename)
 	set ptmpTranscode to POSIX path of (path to temporary items from user domain) & "transcode.umc"
-	set model to getPrinterModel()
-	set height to getHeight()
+	set model to getPrinterModel(false)
+	set height to getHeight(model)
 	-- ask user for nozzle height
 	repeat
 		set DlogResult to display dialog ("Printing: " & POSIX path of filename & linefeed & "Printer: " & model & linefeed & "Set Nozzle Height:") Â
 			default answer height Â
-			buttons {"Cancel", "Transcode"} default button 2 Â
+			buttons {"Cancel", "Change Model", "Transcode"} default button 3 Â
 			with title "UP3D Transcoding from G-Code"
 		set height to text returned of DlogResult as real
 		set answer to button returned of DlogResult
 		if answer is equal to "Cancel" then
 			return {}
 		end if
-		if height < 100 or height > 200 then
-			display dialog "Nozzle Height must be set between 100 and 200 mm."
+		if answer is equal to "Change Model" then
+			set model to getPrinterModel(true)
+			set height to getHeight(model)
 		else
-			exit repeat
+			-- the Cetus3D can go up to 300mm on Z-axis
+			if height < 100 or height > 310 then
+				display dialog "Nozzle Height must be set between 100 and 310 mm."
+			else
+				exit repeat
+			end if
 		end if
 	end repeat
 	set transcoder to getTranscoder()
 	-- save nozzle height to defaults
-	do shell script ("defaults write com.up3d.transcode nozzle_height " & height)
+	do shell script ("defaults write com.up3d.transcode nozzle_height_" & model & " " & height)
 	set nozzle_height to height as text
 	-- replace comma to point in nozzle height string
 	set o to offset of "," in nozzle_height
