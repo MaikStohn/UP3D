@@ -44,34 +44,12 @@ The script will only work with file name endings .gcode .gc .g .go
 *)
 
 property extension_list : {"gcode", "gc", "g", "go"}
+property model_list : {"mini", "classic", "plus", "box", "Cetus"}
+
 
 on adding folder items to this_folder after receiving added_items
-	--display notification "adding folder items"
-	try
-		if number of items in added_items > 0 then
-			repeat with this_item in added_items
-				set item_info to the info for this_item
-				if (the name extension of the item_info is in the extension_list) then
-					set appInstalled to false
-					try
-						-- we want to launch this script as an app in order to get the nice progress bar displayed
-						-- the app must either be in the same directory or in the path eg /Applications
-						do shell script ("open -a pup3d " & quoted form of (POSIX path of this_item))
-						set appInstalled to true
-					end try
-					if appInstalled is not true then
-						error number -192 -- A resource wasnÕt found.	
-						-- no app, no progress bar :(
-						display dialog ("Missing pup3d.app. Please install pup3d.app inside /Applications folder.") with title "Error" buttons {"Cancel"}
-						--process(this_item)
-					end if
-					--tell application "Finder" to delete file this_item
-				end if
-			end repeat
-		end if
-	on error thisErr
-		display notification thisErr
-	end try
+	--display notification ("adding folder items: " & added_items)
+	run_as_app(added_items)
 end adding folder items to
 
 on launch (arguments)
@@ -79,13 +57,8 @@ on launch (arguments)
 end launch
 
 on open (arguments)
-	--display notification "open"
-	if number of items in arguments > 0 then
-		set fa to first item of arguments
-		process(fa)
-	else
-		--display notification "nothing to do" with title "print_up3d"
-	end if
+	--display notification ("open: " & arguments)
+	process_arguments(arguments)
 end open
 
 on run (arguments)
@@ -98,17 +71,60 @@ on run (arguments)
 	
 	-- if no arguments are present we ask for a file
 	if argc = 0 then
-		set fname to (choose file with prompt Â
+		set arguments to (choose file with prompt Â
 			"UP3D select G-Code file to transcode and print" of type extension_list)
-	else
-		set fname to (first item of arguments)
 	end if
-	
-	process(fname)
+	process_arguments(arguments as list)
 end run
 
+on run_as_app(added_items)
+	try
+		-- we want to launch this script as an app in order to get the nice progress bar displayed
+		-- the app must either be in the same directory or in the path eg /Applications
+		set args to {}
+		repeat with this_item in added_items
+			set args to args & quoted form of (POSIX path of this_item) & " "
+		end repeat
+		do shell script ("open -a pup3d " & args)
+	on error
+		error number -192 -- A resource wasnÕt found.	
+		display dialog ("Missing pup3d.app. Please install pup3d.app inside /Applications folder.") with title "Error" buttons {"Cancel"}
+	end try
+end run_as_app
 
--- process a G-code file given in 
+
+on process_arguments(arguments)
+	-- first we filter the g-code files
+	set filtered_items to {}
+	repeat with this_item in arguments
+		set item_info to the info for this_item
+		if (the name extension of the item_info is in the extension_list) then
+			set filtered_items to filtered_items & this_item
+		end if
+	end repeat
+	
+	-- with a single file given we just run it
+	-- with multiple files we need to pop up an selector since there is no print queue
+	-- the user can then select one by one file to print
+	if number of items in filtered_items is equal to 1 then
+		process(first item of filtered_items)
+	else if number of items in filtered_items is greater than 1 then
+		repeat
+			set this_item to choose from list filtered_items
+			if this_item is false then exit repeat
+			process(this_item)
+		end repeat
+	else
+		set exts to {}
+		repeat with this_item in extension_list
+			set exts to exts & this_item & " "
+		end repeat
+		display notification ("Only g-code files with extensions " & exts & "are supported.")
+	end if
+end process_arguments
+
+
+-- process a G-code file
 on process(gcode)
 	set transcoderResult to transcode(gcode)
 	if number of items in transcoderResult > 0 then
@@ -145,7 +161,7 @@ on getPrinterModel(forceToAsk)
 		end try
 	end if
 	if model is equal to "ask" then
-		set model to choose from list {"mini", "classic", "plus", "box", "Cetus"}
+		set model to choose from list model_list
 		if model is false then
 			-- exit with "User Canceled" 
 			error number -128
