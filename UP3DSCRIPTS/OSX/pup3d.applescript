@@ -42,13 +42,27 @@
 The script will only work with file name endings .gcode .gc .g .go
  
 *)
+use scripting additions
+use framework "Foundation"
+property NSArray : a reference to current application's NSArray
+
 
 property extension_list : {"gcode", "gc", "g", "go"}
 property model_list : {"mini", "classic", "plus", "box", "Cetus"}
+property done_foldername : "G-Code Files"
+property transcoder_path : ""
+property uploader_path : ""
+property nozzle_heights : {120.0, 120.0, 120.0, 120.0, 180.0} -- in the order of the model_list
+property nozzle_limit : {min:100, max:310}
 
 
 on adding folder items to this_folder after receiving added_items
 	--display notification ("adding folder items: " & added_items)
+	tell application "Finder"
+		if not (exists folder done_foldername of this_folder) then
+			make new folder at this_folder with properties {name:done_foldername}
+		end if
+	end tell
 	run_as_app(added_items)
 end adding folder items to
 
@@ -57,8 +71,9 @@ on launch (arguments)
 end launch
 
 on open (arguments)
-	--display notification ("open: " & arguments)
-	process_arguments(arguments)
+	--display notification ("open: " & arguments )
+	set moveWhenDone to system attribute "moveWhenDone"
+	process_arguments(arguments, moveWhenDone)
 end open
 
 on run (arguments)
@@ -74,8 +89,9 @@ on run (arguments)
 		set arguments to (choose file with prompt Â
 			"UP3D select G-Code file to transcode and print" of type extension_list)
 	end if
-	process_arguments(arguments as list)
+	process_arguments(arguments as list, "")
 end run
+
 
 on run_as_app(added_items)
 	try
@@ -85,15 +101,17 @@ on run_as_app(added_items)
 		repeat with this_item in added_items
 			set args to args & quoted form of (POSIX path of this_item) & " "
 		end repeat
-		do shell script ("open -a pup3d " & args)
+	end try
+	try
+		do shell script ("export moveWhenDone=1; open -a pup3d " & args)
 	on error
-		error number -192 -- A resource wasnÕt found.	
+		--error number -192 -- A resource wasnÕt found.	
 		display dialog ("Missing pup3d.app. Please install pup3d.app inside /Applications folder.") with title "Error" buttons {"Cancel"}
 	end try
 end run_as_app
 
 
-on process_arguments(arguments)
+on process_arguments(arguments, moveWhenDone)
 	-- first we filter the g-code files
 	set filtered_items to {}
 	repeat with this_item in arguments
@@ -113,6 +131,12 @@ on process_arguments(arguments)
 			set this_item to choose from list filtered_items
 			if this_item is false then exit repeat
 			process(this_item)
+			if moveWhenDone = "1" then
+				tell application "Finder"
+					
+					delete (POSIX file this_item)
+				end tell
+			end if
 		end repeat
 	else
 		set exts to {}
@@ -141,11 +165,8 @@ on process(gcode)
 end process
 
 on getHeight(model)
-	try
-		set height to do shell script ("defaults read com.up3d.transcode nozzle_height_" & model)
-	on error
-		set height to 120.0
-	end try
+	set num to its getIndexOfItem:(model as string) inList:model_list
+	set height to get item num of nozzle_heights
 	return height
 end getHeight
 
@@ -198,14 +219,18 @@ end getUploader
 on transcode(filename)
 	set ptmpTranscode to POSIX path of (path to temporary items from user domain) & "transcode.umc"
 	set model to getPrinterModel(false)
-	set height to getHeight(model)
 	-- ask user for nozzle height
 	repeat
+		set height to getHeight(model)
 		set DlogResult to display dialog ("Printing: " & POSIX path of filename & linefeed & "Printer: " & model & linefeed & "Set Nozzle Height:") Â
 			default answer height Â
 			buttons {"Cancel", "Change Model", "Transcode"} default button 3 Â
 			with title "UP3D Transcoding from G-Code"
-		set height to text returned of DlogResult as real
+		try
+			set height to text returned of DlogResult as real
+		on error
+			set height to 0
+		end try
 		set answer to button returned of DlogResult
 		if answer is equal to "Cancel" then
 			return {}
@@ -215,8 +240,8 @@ on transcode(filename)
 			set height to getHeight(model)
 		else
 			-- the Cetus3D can go up to 300mm on Z-axis
-			if height < 100 or height > 310 then
-				display dialog "Nozzle Height must be set between 100 and 310 mm."
+			if height < min of nozzle_limit or height > max of nozzle_limit then
+				display dialog "Nozzle Height must be set between " & min of nozzle_limit & " and " & max of nozzle_limit & " mm."
 			else
 				exit repeat
 			end if
@@ -224,7 +249,15 @@ on transcode(filename)
 	end repeat
 	set transcoder to getTranscoder()
 	-- save nozzle height to defaults
-	do shell script ("defaults write com.up3d.transcode nozzle_height_" & model & " " & height)
+	--do shell script ("defaults write com.up3d.transcode nozzle_height_" & model & " " & height)
+	--	try
+	--		set nozzle_heights to nozzle_heights whose name is not model
+	--	end try
+	--	make new property list item at the end of property list items of contens of nozzle_heights with properties {name:} 
+	
+	set num to its getIndexOfItem:(model as string) inList:model_list
+	set item num in nozzle_heights to height
+	
 	set nozzle_height to height as text
 	-- replace comma to point in nozzle height string
 	set o to offset of "," in nozzle_height
@@ -290,3 +323,36 @@ on upload(pfilename)
 		do shell script ("rm -rf " & quoted form of ptmpUpload)
 	end try
 end upload
+
+
+(*
+-- convert pair of strings into a record
+-- http://books.gigatux.nl/mirror/applescriptdefinitiveguide/applescpttdg2-CHP-14-SECT-6.html#applescpttdg2-CHP-14-SECT-6
+on listToRecord(L)
+	script myScript
+		return {Çclass usrfÈ:L}
+	end script
+	return run script myScript
+end listToRecord
+*)
+
+(*
+on getWhat(what, r)
+	script myScript
+		return get what of r
+	end script
+	return run script myScript
+end getWhat
+*)
+
+-- http://applehelpwriter.com/2016/08/09/applescript-get-item-number-of-list-item/
+on getIndexOfItem:anItem inList:aList
+	set anArray to NSArray's arrayWithArray:aList
+	set ind to ((anArray's indexOfObject:anItem) as number) + 1 # see note below
+	if ind is greater than (count of aList) then
+		--display dialog "Item '" & anItem & "' not found in list." buttons "OK" default button "OK" with icon 2 with title "Error"
+		return 0
+	else
+		return ind
+	end if
+end getIndexOfItem:inList:
