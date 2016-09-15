@@ -1,7 +1,7 @@
 #! /usr/bin/osascript
 (*
 
- This scripot uses up3dtranscoder and up3dload from the UP3D project to transcode a gcode file and upload it to the printer.
+ This scripot uses up3dtranscoder and up3dload from the UP3D project to transcode a g-code file and upload it to the printer.
  It allows you to automatically transcode the g-code and send it to the 3d printer.
  When saving the g-code from your slicer (like Slic3r, Cura or Simplify3D) to a specific folder
  the script starts.
@@ -24,20 +24,14 @@
  - select the pup3d.scpt you just move to the Folder Action Scripts
  
  When you first launch the script it will ask you to point to the up3dtranscoder and up3dloader program.
- Next it will ask for the printer model and nozzle height. These parameters gets saved in the defaults of you mac.
- You can look up the setting in terminal with this command:
-
- defaults read up3d.co
-
- and you can reset the defaults if you wish with the follwing command:
- 
- defaults delete up3d.com
+ Next it will ask for the printer model and nozzle height. These parameters gets saved.
  
  
  How to use
  
- When you save or move files to the folder you configured for the script action the transcoder and uploader
- will automatically start and ask for some essential settings (nozzle height)
+ When you save or move or save files to the folder you configured for the script action, the transcoder and uploader
+ will automatically start and ask for some essential settings (nozzle height). After processing the g-code file will
+ be moved to a folder called processed. G-code files with the same name will be overwritten.
  
 The script will only work with file name endings .gcode .gc .g .go
  
@@ -49,7 +43,7 @@ property NSArray : a reference to current application's NSArray
 
 property extension_list : {"gcode", "gc", "g", "go"}
 property model_list : {"mini", "classic", "plus", "box", "Cetus"}
-property done_foldername : "G-Code Files"
+property done_foldername : "processed"
 property transcoder_path : ""
 property uploader_path : ""
 property nozzle_heights : {120.0, 120.0, 120.0, 120.0, 180.0} -- in the order of the model_list
@@ -71,7 +65,7 @@ on launch (arguments)
 end launch
 
 on open (arguments)
-	--display notification ("open: " & arguments )
+	--display notification ("open: " & arguments)
 	set moveWhenDone to system attribute "moveWhenDone"
 	process_arguments(arguments, moveWhenDone)
 end open
@@ -126,26 +120,39 @@ on process_arguments(arguments, moveWhenDone)
 	-- the user can then select one by one file to print
 	if number of items in filtered_items is equal to 1 then
 		process(first item of filtered_items)
+		if moveWhenDone = "1" then
+			moveWhenDone(first item of filtered_items)
+		end if
 	else if number of items in filtered_items is greater than 1 then
 		repeat
 			set this_item to choose from list filtered_items
 			if this_item is false then exit repeat
 			process(this_item)
 			if moveWhenDone = "1" then
-				tell application "Finder"
-					
-					delete (POSIX file this_item)
-				end tell
+				moveWhenDone(this_item)
 			end if
 		end repeat
 	else
-		set exts to {}
+		set extns to {}
 		repeat with this_item in extension_list
-			set exts to exts & this_item & " "
+			set extns to extns & this_item & " "
 		end repeat
-		display notification ("Only g-code files with extensions " & exts & "are supported.")
+		display notification ("Only g-code files with extensions " & extns & "are supported.")
 	end if
 end process_arguments
+
+
+-- here we move the gcode file to the done_folder previosuely created when adding folder items
+on moveWhenDone(this_item)
+	set this_file to this_item as alias
+	tell application "Finder"
+		set destination to (parent of this_file as text) & done_foldername
+		if not (exists destination) then
+			set destination to make new folder at parent of this_file with properties {name:done_foldername}
+		end if
+		move this_file to destination with replacing
+	end tell
+end moveWhenDone
 
 
 -- process a G-code file
@@ -194,26 +201,20 @@ end getPrinterModel
 
 
 on getTranscoder()
-	try
-		set transcoder to do shell script "defaults read com.up3d.transcode transcoder_path"
-	on error
-		set transcoder to POSIX path of Â
+	if transcoder_path = "" then
+		set transcoder_path to POSIX path of Â
 			(choose file with prompt Â
 				"Can't find transcoder executable. Please select UP3D Transcoder." of type {"public.executable"})
-		do shell script ("defaults write com.up3d.transcode transcoder_path " & quoted form of transcoder)
-	end try
-	return transcoder
+	end if
+	return transcoder_path
 end getTranscoder
 
 on getUploader()
-	try
-		set uploader to do shell script "defaults read com.up3d.transcode uploader_path"
-	on error
-		set uploader to POSIX path of (choose file with prompt Â
+	if uploader_path = "" then
+		set uploader_path to POSIX path of (choose file with prompt Â
 			"Can't find uploader executeable. Please Select UP3D uploader" of type {"public.executable"})
-		do shell script ("defaults write com.up3d.transcode uploader_path " & quoted form of uploader)
-	end try
-	return uploader
+	end if
+	return uploader_path
 end getUploader
 
 on transcode(filename)
@@ -345,7 +346,9 @@ on getWhat(what, r)
 end getWhat
 *)
 
--- http://applehelpwriter.com/2016/08/09/applescript-get-item-number-of-list-item/
+(*
+http://applehelpwriter.com/2016/08/09/applescript-get-item-number-of-list-item/
+*)
 on getIndexOfItem:anItem inList:aList
 	set anArray to NSArray's arrayWithArray:aList
 	set ind to ((anArray's indexOfObject:anItem) as number) + 1 # see note below
