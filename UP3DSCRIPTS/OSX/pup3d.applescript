@@ -56,6 +56,7 @@ global moveWhenDone
 
 on adding folder items to this_folder after receiving added_items
 	--display notification ("adding folder items: " & added_items)
+	set moveWhenDone to "1"
 	run_as_app(added_items)
 end adding folder items to
 
@@ -65,8 +66,12 @@ end launch
 
 on open (arguments)
 	--display notification ("open: " & arguments)
-	set moveWhenDone to system attribute "moveWhenDone"
-	process_arguments(arguments, moveWhenDone)
+	try
+		set moveWhenDone to system attribute "moveWhenDone"
+	on error
+		set moveWhenDone to "0"
+	end try
+	process_arguments(arguments)
 end open
 
 on run (arguments)
@@ -98,7 +103,7 @@ on run_as_app(added_items)
 		end repeat
 	end try
 	try
-		do shell script ("export moveWhenDone=1; open -n -a pup3d " & args)
+		do shell script ("export moveWhenDone=" & moveWhenDone & "; open -n -a pup3d " & args)
 	on error
 		--error number -192 -- A resource wasn’t found.	
 		display dialog ("Missing pup3d.app. Please install pup3d.app inside /Applications folder.") with title "Error" buttons {"Cancel"}
@@ -106,7 +111,7 @@ on run_as_app(added_items)
 end run_as_app
 
 
-on process_arguments(arguments, moveWhenDone)
+on process_arguments(arguments)
 	-- first we filter the g-code files
 	set filtered_items to {}
 	repeat with this_item in arguments
@@ -122,12 +127,27 @@ on process_arguments(arguments, moveWhenDone)
 	if number of items in filtered_items is equal to 1 then
 		process(first item of filtered_items)
 	else if number of items in filtered_items is greater than 1 then
-		repeat
-			set this_item to choose from list filtered_items with title "UP3D" with prompt "Select file to print:"
-			if this_item is false then exit repeat
+		set this_item to choose from list filtered_items with title "UP3D" with prompt "Select file to print:"
+		if this_item is not false then
 			process(this_item)
-		end repeat
-	else
+			-- in case the file got moved we remove it from the list
+			if moveWhenDone is "1" then
+				set next_arguments to {}
+				repeat with next_item in filtered_items
+					if next_item is not equal to this_item then
+						set next_arguments to next_arguments & next_item
+					end if
+				end repeat
+				set filtered_items to next_arguments
+			end if
+			
+			-- in order to get the progress window close
+			-- we respawn the program with the same list and return
+			if number of items in filtered_items > 0 then
+				run_as_app(filtered_items)
+			end if
+		end if
+	else -- no item matches the criteria
 		set extns to {}
 		repeat with this_item in extension_list
 			set extns to extns & this_item & " "
@@ -191,7 +211,7 @@ end askPrinterModel
 
 on getTranscoder()
 	if transcoder_path = "" then
-		set my_path to POSIX path of (path to me as text) & "Contents/MacOS/up3dtranscodes"
+		set my_path to POSIX path of (path to me as text) & "Contents/MacOS/up3dtranscode"
 		try
 			do shell script ("ls " & quoted form of my_path)
 		on error
@@ -245,7 +265,7 @@ on transcode(filename)
 		else
 			-- the Cetus3D can go up to 300mm on Z-axis
 			if height < min of nozzle_limit or height > max of nozzle_limit then
-				display dialog "Nozzle Height must be set between " & min of nozzle_limit & " and " & max of nozzle_limit & " mm."
+				display alert "Nozzle Height must be set between " & min of nozzle_limit & " and " & max of nozzle_limit & " mm."
 			else
 				exit repeat
 			end if
@@ -274,10 +294,11 @@ on upload(pfilename)
 			" > " & quoted form of ptmpUpload & " 2>&1 &")
 		log ("upload launched...")
 		set progress description to "Sending data to printer"
-		set progress additional description to "Uploading…"
+		set progress additional description to "start uploading"
 		set progress total steps to 100
+		set p to 0
 		repeat
-			--delay 0.2
+			--delay 0.2  --slowing down the polling of the log tail decreases the chance to get a completet line
 			try
 				-- now we get the last line of the uploader output
 				-- first we strip newlines from the file
