@@ -10,6 +10,10 @@
  
  Open this script via Apple Script-Editor and export it as an program (pup3d.app)
  Move pup3d.app to the /Applications folder
+ Next the up3dtranscode and up3dload executabels need to be moved to the app package.
+ This can be done by right clock on the pup3d.app and select show package content. You
+ then need to copy the two files to the Contents/MacOS folder.
+ 
 
  In order to make it available for action folder it needs to export this script as an script (pup3d.scpt)
  in the Apple Script Editor and then move it with the Finder to the final destination:
@@ -23,7 +27,6 @@
  - right click on the folder and select Services (Dienste) /  Folder Actions configure ... (Ordneraktionen konfigurieren ...)
  - select the pup3d.scpt you just move to the Folder Action Scripts
  
- When you first launch the script it will ask you to point to the up3dtranscoder and up3dloader program.
  Next it will ask for the printer model and nozzle height. These parameters gets saved.
  
  
@@ -40,23 +43,19 @@ use scripting additions
 use framework "Foundation"
 property NSArray : a reference to current application's NSArray
 
-
 property extension_list : {"gcode", "gc", "g", "go"}
 property model_list : {"mini", "classic", "plus", "box", "Cetus"}
 property done_foldername : "processed"
 property transcoder_path : ""
 property uploader_path : ""
-property nozzle_heights : {120.0, 120.0, 120.0, 120.0, 180.0} -- in the order of the model_list
-property nozzle_limit : {min:100, max:310}
+property nozzle_heights : {123.45, 123.45, 123.45, 123.45, 180.12} -- in the order of the model_list
+property nozzle_limit : {min:100.0, max:310.0}
+property current_model : "--- please select printer type ---"
 
+global moveWhenDone
 
 on adding folder items to this_folder after receiving added_items
 	--display notification ("adding folder items: " & added_items)
-	tell application "Finder"
-		if not (exists folder done_foldername of this_folder) then
-			make new folder at this_folder with properties {name:done_foldername}
-		end if
-	end tell
 	run_as_app(added_items)
 end adding folder items to
 
@@ -78,6 +77,8 @@ on run (arguments)
 		set argc to 0
 	end try
 	
+	set moveWhenDone to "0"
+	
 	-- if no arguments are present we ask for a file
 	if argc = 0 then
 		set arguments to (choose file with prompt Â
@@ -97,7 +98,7 @@ on run_as_app(added_items)
 		end repeat
 	end try
 	try
-		do shell script ("export moveWhenDone=1; open -a pup3d " & args)
+		do shell script ("export moveWhenDone=1; open -n -a pup3d " & args)
 	on error
 		--error number -192 -- A resource wasnÕt found.	
 		display dialog ("Missing pup3d.app. Please install pup3d.app inside /Applications folder.") with title "Error" buttons {"Cancel"}
@@ -120,17 +121,11 @@ on process_arguments(arguments, moveWhenDone)
 	-- the user can then select one by one file to print
 	if number of items in filtered_items is equal to 1 then
 		process(first item of filtered_items)
-		if moveWhenDone = "1" then
-			moveWhenDone(first item of filtered_items)
-		end if
 	else if number of items in filtered_items is greater than 1 then
 		repeat
-			set this_item to choose from list filtered_items
+			set this_item to choose from list filtered_items with title "UP3D" with prompt "Select file to print:"
 			if this_item is false then exit repeat
 			process(this_item)
-			if moveWhenDone = "1" then
-				moveWhenDone(this_item)
-			end if
 		end repeat
 	else
 		set extns to {}
@@ -143,26 +138,29 @@ end process_arguments
 
 
 -- here we move the gcode file to the done_folder previosuely created when adding folder items
-on moveWhenDone(this_item)
-	set this_file to this_item as alias
-	tell application "Finder"
-		set destination to (parent of this_file as text) & done_foldername
-		if not (exists destination) then
-			set destination to make new folder at parent of this_file with properties {name:done_foldername}
-		end if
-		move this_file to destination with replacing
-	end tell
-end moveWhenDone
+on moveFileToProcessedFolder(this_item)
+	if moveWhenDone = "1" then
+		set this_file to this_item as alias
+		tell application "Finder"
+			set destination to (parent of this_file as text) & done_foldername
+			if not (exists destination) then
+				set destination to make new folder at parent of this_file with properties {name:done_foldername}
+			end if
+			move this_file to destination with replacing
+		end tell
+	end if
+end moveFileToProcessedFolder
 
 
 -- process a G-code file
 on process(gcode)
 	set transcoderResult to transcode(gcode)
-	if number of items in transcoderResult > 0 then
+	if transcoderResult is not {} then
 		display dialog (status of transcoderResult) with title Â
 			"UP3D transcoding result" buttons {"Cancel", "Send To Printer"} default button 2
 		if button returned of result = "Send To Printer" then
 			upload(tmpFile of transcoderResult)
+			moveFileToProcessedFolder(gcode)
 		end if
 		try
 			-- clean up tmp file
@@ -171,64 +169,69 @@ on process(gcode)
 	end if
 end process
 
+
+-- get nozzle height of current model
+-- if model is not set then return as default the first parameter of nozzle_heights
 on getHeight(model)
 	set num to its getIndexOfItem:(model as string) inList:model_list
+	if num = 0 then set num to 1
 	set height to get item num of nozzle_heights
 	return height
 end getHeight
 
 -- get printer model from defaults. If not defined then ask user for it.
-on getPrinterModel(forceToAsk)
-	if forceToAsk is true then
-		set model to "ask"
-	else
-		try
-			set model to do shell script ("defaults read com.up3d.transcode model")
-		on error
-			set model to "ask"
-		end try
+on askPrinterModel()
+	set model to choose from list model_list with title "PUP3D" with prompt "Select printer type:"
+	if model is not {} and model is not false then
+		set current_model to model
 	end if
-	if model is equal to "ask" then
-		set model to choose from list model_list
-		if model is false then
-			-- exit with "User Canceled" 
-			error number -128
-		end if
-		do shell script ("defaults write com.up3d.transcode model " & model)
-	end if
-	return model
-end getPrinterModel
+	return current_model
+end askPrinterModel
 
 
 on getTranscoder()
 	if transcoder_path = "" then
-		set transcoder_path to POSIX path of Â
-			(choose file with prompt Â
-				"Can't find transcoder executable. Please select UP3D Transcoder." of type {"public.executable"})
+		set my_path to POSIX path of (path to me as text) & "Contents/MacOS/up3dtranscodes"
+		try
+			do shell script ("ls " & quoted form of my_path)
+		on error
+			display alert ("Missing the 'up3dtranscode' in this bundle.")
+			error number -192
+		end try
+		set transcoder_path to my_path
 	end if
 	return transcoder_path
 end getTranscoder
 
 on getUploader()
 	if uploader_path = "" then
-		set uploader_path to POSIX path of (choose file with prompt Â
-			"Can't find uploader executeable. Please Select UP3D uploader" of type {"public.executable"})
+		set my_path to POSIX path of (path to me) & "Contents/MacOS/up3dload"
+		try
+			do shell script ("ls " & quoted form of my_path)
+		on error
+			display alert ("Missing 'up3dloade' in this bundle.")
+			error number -192
+		end try
+		set uploader_path to my_path
 	end if
 	return uploader_path
 end getUploader
 
+
+-- transcodes a given g-code file and asks for printer type and nozzle height
+-- on success it returns the path to the transcoded file
+-- on fail it returns {}
 on transcode(filename)
 	set ptmpTranscode to POSIX path of (path to temporary items from user domain) & "transcode.umc"
-	set model to getPrinterModel(false)
 	-- ask user for nozzle height
 	repeat
-		set height to getHeight(model)
-		set DlogResult to display dialog ("Printing: " & POSIX path of filename & linefeed & "Printer: " & model & linefeed & "Set Nozzle Height:") Â
+		set height to getHeight(current_model)
+		set DlogResult to display dialog ("Printing: " & POSIX path of filename & linefeed & "Printer: " & current_model & linefeed & "Set Nozzle Height:") Â
 			default answer height Â
-			buttons {"Cancel", "Change Model", "Transcode"} default button 3 Â
+			buttons {"Cancel", "Select Printer Type", "Transcode..."} default button 3 Â
 			with title "UP3D Transcoding from G-Code"
 		try
-			set height to text returned of DlogResult as real
+			set height to text returned of DlogResult as number
 		on error
 			set height to 0
 		end try
@@ -236,9 +239,9 @@ on transcode(filename)
 		if answer is equal to "Cancel" then
 			return {}
 		end if
-		if answer is equal to "Change Model" then
-			set model to getPrinterModel(true)
-			set height to getHeight(model)
+		if answer is equal to "Select Printer Type" or current_model is not in model_list then
+			askPrinterModel()
+			set height to getHeight(current_model)
 		else
 			-- the Cetus3D can go up to 300mm on Z-axis
 			if height < min of nozzle_limit or height > max of nozzle_limit then
@@ -248,22 +251,16 @@ on transcode(filename)
 			end if
 		end if
 	end repeat
-	set transcoder to getTranscoder()
-	-- save nozzle height to defaults
-	--do shell script ("defaults write com.up3d.transcode nozzle_height_" & model & " " & height)
-	--	try
-	--		set nozzle_heights to nozzle_heights whose name is not model
-	--	end try
-	--	make new property list item at the end of property list items of contens of nozzle_heights with properties {name:} 
-	
-	set num to its getIndexOfItem:(model as string) inList:model_list
+	-- save nozzle height in property nozzle_heights
+	set num to its getIndexOfItem:(current_model as string) inList:model_list
 	set item num in nozzle_heights to height
-	
+	-- ask for the transcoder path
+	set transcoder to getTranscoder()
 	set nozzle_height to height as text
 	-- replace comma to point in nozzle height string
 	set o to offset of "," in nozzle_height
 	if o is not 0 then set nozzle_height to text 1 thru (o - 1) of nozzle_height & "." & text (o + 1) thru -1 of nozzle_height
-	do shell script (quoted form of transcoder & " " & model & "  " & quoted form of POSIX path of filename & Â
+	do shell script (quoted form of transcoder & " " & current_model & "  " & quoted form of POSIX path of filename & Â
 		" " & quoted form of ptmpTranscode & " " & nozzle_height)
 	return {tmpFile:ptmpTranscode, status:result}
 end transcode
