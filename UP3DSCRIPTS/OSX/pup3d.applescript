@@ -288,8 +288,8 @@ end transcode
 on upload(pfilename)
 	set ptmpUpload to POSIX path of (path to temporary items from user domain) & "upload.out"
 	set uploader to getUploader()
-	set retry to false
 	repeat
+		set retry to true
 		do shell script (quoted form of uploader & " " & quoted form of pfilename & Â
 			" &> " & quoted form of ptmpUpload & "  & echo $!")
 		set pid to result
@@ -313,7 +313,7 @@ on upload(pfilename)
 				if status_line contains "ERROR" then
 					display dialog status_line with title Â
 						"UP3D upload" buttons {"Cancel", "Retry"} default button 2
-					if button returned of result = "Retry" then
+					if button returned of result is equal to "Retry" then
 						set retry to true
 					else
 						set retry to false
@@ -342,7 +342,10 @@ on upload(pfilename)
 					-- process is still alive here
 				on error
 					-- the process has ended, so we get an error from the above kill -0 pid command
-					set retry to false
+					-- only if 100% has benn uploaded without error then we allow to exit
+					if p is equal to 100 then
+						set retry to false
+					end if
 					exit repeat
 				end try
 				-- t is always set to the last time the output file size increments 
@@ -354,13 +357,9 @@ on upload(pfilename)
 				-- check for time out
 				log ("timeout conter: " & (time of (current date)) - t)
 				if (time of (current date)) - t > 10 then
-					try
-						-- kill upload
-						do shell script ("kill -9 " & pid)
-					end try
 					set progress additional description to "timeout during upload"
 					display alert ("Could not complete upload in time." & linefeed & status_line)
-					set retry to false
+					set retry to true
 					exit repeat
 				end if
 			on error thisErr
@@ -368,12 +367,16 @@ on upload(pfilename)
 				return
 			end try
 		end repeat
-		if retry is equal to false then exit repeat
+		try
+			-- clean up process in case anything hangs here
+			do shell script ("kill -9 " & pid)
+		end try
+		try
+			-- clean up tmp file
+			do shell script ("rm -rf " & quoted form of ptmpUpload)
+		end try
+		if retry is not true then exit repeat
 	end repeat
-	-- clean up tmp file
-	try
-		do shell script ("rm -rf " & quoted form of ptmpUpload)
-	end try
 	-- let user know the status of the upload
 	set progress additional description to status_line
 	delay 2
