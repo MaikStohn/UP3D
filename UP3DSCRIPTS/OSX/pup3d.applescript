@@ -291,12 +291,15 @@ on upload(pfilename)
 	set retry to false
 	repeat
 		do shell script (quoted form of uploader & " " & quoted form of pfilename & Â
-			" > " & quoted form of ptmpUpload & " 2>&1 &")
-		log ("upload launched...")
+			" &> " & quoted form of ptmpUpload & "  & echo $!")
+		set pid to result
+		log ("upload launched with pid: " & pid)
 		set progress description to "Sending data to printer"
 		set progress additional description to "start uploading"
 		set progress total steps to 100
 		set p to 0
+		set t to (time of (current date)) --get start time in seconds
+		set file_size to 0
 		repeat
 			--delay 0.2  --slowing down the polling of the log tail decreases the chance to get a completet line
 			try
@@ -318,29 +321,67 @@ on upload(pfilename)
 					exit repeat
 				else if (count of words of status_line) > 5 then
 					try
-						set p to item 5 of words of status_line as number
-						--set progress additional description to status_line
-						set progress completed steps to p
-						log (p)
-						if p is equal to 100 then
-							retry = false
-							exit repeat
-						end if
+						set pn to item 5 of words of status_line as number
 					on error thisErr
 						log ("fail: " & (words of status_line) & " | " & thisErr)
 					end try
+					if pn > p then
+						set p to pn
+						set progress additional description to "uploading..."
+						set progress completed steps to p
+						if p is equal to 100 then
+							--set retry to false
+							set progress additional description to "upload completed"
+							--exit repeat
+						end if
+					end if
+				end if
+				-- now we check if the upload process still runs
+				try
+					do shell script ("kill -0 " & pid)
+					-- process is still alive here
+				on error
+					-- the process has ended, so we get an error from the above kill -0 pid command
+					set retry to false
+					exit repeat
+				end try
+				-- t is always set to the last time the output file size increments 
+				set current_size to do shell script ("stat -f%z " & quoted form of ptmpUpload)
+				if current_size > file_size then
+					set file_size to current_size
+					set t to (time of (current date))
+				end if
+				-- check for time out
+				log ("timeout conter: " & (time of (current date)) - t)
+				if (time of (current date)) - t > 10 then
+					try
+						-- kill upload
+						do shell script ("kill -9 " & pid)
+					end try
+					set progress additional description to "timeout during upload"
+					display alert ("Could not complete upload in time." & linefeed & status_line)
+					set retry to false
+					exit repeat
 				end if
 			on error thisErr
 				display alert thisErr
 				return
 			end try
 		end repeat
-		if retry = false then exit repeat
+		if retry is equal to false then exit repeat
 	end repeat
 	-- clean up tmp file
 	try
 		do shell script ("rm -rf " & quoted form of ptmpUpload)
 	end try
+	-- let user know the status of the upload
+	set progress additional description to status_line
+	delay 2
+	-- clean up progress
+	set progress total steps to -1
+	set progress completed steps to -1
+	--set progress description to ""
+	--set progress additional description to ""
 end upload
 
 
