@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define cetus
+
+#ifndef cetus
 #define STEPS_X (854.0)
 #define STEPS_Y (854.0)
 #define STEPS_E (854.0)
@@ -15,6 +18,18 @@
 #define ADD_X   (0.0)
 #define ADD_Y   (120.0)
 #define ADD_Z   (123.1)
+
+#else // cetus
+
+#define STEPS_X (160.0)
+#define STEPS_Y (160.0)
+#define STEPS_E (236.0)
+
+#define ADD_X   (0.0)
+#define ADD_Y   (180.0)
+#define ADD_Z   (182.1)
+
+#endif
 
 typedef enum PCMD {
   PCMD_Stop         = 0x00000001,
