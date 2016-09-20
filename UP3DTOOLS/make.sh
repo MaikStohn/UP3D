@@ -85,7 +85,17 @@ $CC -Os -Wall \
     `pkg-config --libs-only-L libusb-1.0|cut -c3-`/libusb-1.0.a \
     -o up3dcapture ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c capture.c
 
-$STRIP up3dshell
+$STRIP up3dcapture
+
+$CC -Os -Wall \
+    -framework IOKit \
+    -framework CoreFoundation \
+    -I../UP3DCOMMON/ \
+    -lobjc \
+    -o up3dgcode togcode.c
+
+$STRIP up3dgcode
+
 
 
 elif [[ "$OSTYPE" == "linux-gnu" ]]; then

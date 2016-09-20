@@ -1,9 +1,9 @@
 ///////////////////////////////////////////////////////
-// Author: K.Scheffer based on upshell from M. Stohn //
+// Author: K.Scheffer
 //
-// Date: 18.Sep.2016
+// Date: 19.Sep.2016
 //
-// live captures the position reporting of the printer
+// processes capture file from printer
 // and translates it to g-code
 //
 //////////////////////////////////////////////////////
@@ -44,81 +44,43 @@
 #define MIN_ANGLE (M_PI/3600)  // we give it a try with this
 #define TO_DEG(rad) (((rad) > 0 ? (rad) : (2*M_PI + (rad))) * 360 / (2*M_PI))
 
-float steps[4]; // steps per mm for each axis from printer info
+typedef enum  {
+  MOVE_XY,
+  MOVE_Z,
+  MOVE_E,
+  EXTRUDE,
+  HOME,
+  IDLE
+} GCODE;
 
+// for statistics
+long gcode_lines = 0;
+long gcode_move_xy = 0;
+long gcode_move_z = 0;
+long gcode_move_e = 0;
+long gcode_extrude = 0;
+long gcode_home = 0;
+long gcode_idle = 0;
+long gcode_timelaps = 0;
 
-float timedifference_msec(struct timeval t0, struct timeval t1)
-{
-    return (t1.tv_sec - t0.tv_sec) * 1000.0f + (t1.tv_usec - t0.tv_usec) / 1000.0f;
-} 
-
-
-#define CAPTURE_STATES
-
-/*
- * captures the position and state information from the printer
- * and prints it out to stdout.
- *
- * input   : continues time counter in milliseconds
- * returns : machine state
- */  
-static int32_t capture(double time)
-{
-  static bool init = false;
-  static double t0;
-    
-  if (init == false)
-  {
-    init = true;
-    t0 = time;
-#ifdef CAPTURE_STATES
-    printf("t,x,y,z,e,mstat,pstat,sstat\n"); 
-#else
-    printf("t,x,y,z,e\n"); 
-#endif
-  }
-  double interval_ms = (time - t0);
-  t0 = time;
-  
-  int32_t xpos = UP3D_GetAxisPosition(1);
-  float x = (float)xpos / steps[0];
-
-  int32_t ypos = UP3D_GetAxisPosition(2);
-  float y = (float)ypos / steps[1];
-
-  int32_t zpos = UP3D_GetAxisPosition(3);
-  float z = (float)zpos / steps[2];
-
-  int32_t epos = UP3D_GetAxisPosition(4);
-  float e = (float)epos / steps[3];
-  
-#ifdef CAPTURE_STATES
-  int32_t mstat = UP3D_GetMachineState();
-  int32_t pstat = UP3D_GetProgramState();
-  int32_t sstat = UP3D_GetSystemState();
-  printf("%0.3f,%0.3f,%0.3f,%0.3f,%0.3f,%s,%s,%s\n",
-    time, x,y,z,e,
-    UP3D_STR_MACHINE_STATE[mstat],
-    UP3D_STR_PROGRAM_STATE[pstat],
-    UP3D_STR_SYSTEM_STATE[sstat] );
-#else
-  printf("%0.3f,%0.3f,%0.3f,%0.3f,%0.3f\n",
-    time, x,y,z,e );
-#endif
-
-#ifdef CAPTURE_STATES
-  return mstat;
-#else
-  return 2;  // return "Running Program"
-#endif
-}
-
-#if 0
-static void process(double time)
+static bool process(char* line)
 {
   static bool init = false;
   
-  // parameters of last g-code 
+  // line should be organized as t,x,y,z,e,state
+  // the very first line contains a header
+  
+  double time;
+  float  x, y, z, e;
+  char state[32];
+  
+  if ( sscanf(line, "%lf,%f,%f,%f,%f,%[^,\t\n]", &time,&x,&y,&z,&e, state) != 6)
+  return true; // just skip a non valid line
+  
+  //echo for debugging
+  printf(";%s", line);
+  
+  // parameters of last g-code
   static float  gx = 0;
   static float  gy = 0;
   static float  gz = 0;
@@ -126,18 +88,18 @@ static void process(double time)
   static float  gvx = 0;  //speed x/y
   static float  gve = 0;  //speed e
   static float  gvz = 0;  //speed z
-  static double gt  = 0;  //time
+  
   
   // parameters of last sample
-  static float hx = 0; 
+  static float hx = 0;
   static float hy = 0;
-  static float hvx = 0;  //momentary speed  
+  static float hz = 0;
+  static float he = 0;
+  static float hvx = 0;  //momentary speed
+  static GCODE last_command = HOME;
   
   static int32_t gmstat;
-  static int32_t gpstat;
-  static int32_t gsstat;
   
-  static bool bx,by, bz, be;
   static double t0;
   static double t1;
   static double direction = 10; // larger than 2°PI
@@ -145,43 +107,36 @@ static void process(double time)
   if (init == false)
   {
     init = true;
-    t0 = time;
-    gmstat = UP3D_GetMachineState();
-    gpstat = UP3D_GetProgramState();
-    gsstat = UP3D_GetSystemState();
-    gx = (float)UP3D_GetAxisPosition(1) / steps[0];
-    gy = (float)UP3D_GetAxisPosition(1) / steps[1];
-    gz = (float)UP3D_GetAxisPosition(1) / steps[2];
-    ge = (float)UP3D_GetAxisPosition(1) / steps[3];
+    t0 = t1 = time;
+    gmstat = (strcmp(state,"Idle") == 0) ? 3: 2;
+    gx = x;
+    gy = y;
+    gz = z;
+    ge = e;
     hx = gx;
     hy = gy;
-    return;
+    return true;
   }
+
+#if 0
+  // we average the samples here to get a more clean signal
+  x = (x + hx) / 2;
+  y = (y + hy) / 2;
+  z = (z + hz) / 2;
+  e = (e + he) / 2;
+#endif
   
   float dt = (time - t0) / 1000.0f;    // time in seconds since last g-code command
   float dt1 = (time - t1) / 1000.0f;   // time since last call
   
-  //printf("dt : %f\n", dt);
-
-  // first we get the positions, since they are time critical
-
-  int32_t xpos = UP3D_GetAxisPosition(1);
-  float x = (float)xpos / steps[0];
-
-  int32_t ypos = UP3D_GetAxisPosition(2);
-  float y = (float)ypos / steps[1];
-
-  int32_t zpos = UP3D_GetAxisPosition(3);
-  float z = (float)zpos / steps[2];
-
-  int32_t epos = UP3D_GetAxisPosition(4);
-  float e = (float)epos / steps[3];
+  if (dt1 > 0.1)
+    printf("; inconsistent time lapse of %02.f ms\n", dt1 * 1000), gcode_timelaps++;
   
   // flags for changes in any parameter since last g-command
-  bx = (gx != x) ? true: false;
-  by = (gy != y) ? true: false;
-  bz = (gz != z) ? true: false;
-  be = (ge != e) ? true: false;
+  bool bx = (gx != x) ? true: false;
+  bool by = (gy != y) ? true: false;
+  bool bz = (gz != z) ? true: false;
+  bool be = (ge != e) ? true: false;
   
   // calculate parameters based on last g-command
   float sx  = gx-x;
@@ -191,40 +146,122 @@ static void process(double time)
   int   f   = LIMIT_F(v*60);
   
   // calculate parameters based on last call
-  float isx  = ix - x;
-  float isy  = iy - y;
-  float ilen = sqrt(isx*isx + isy*isy);
-  float iv   = fabs(ilen) / dt1;
+  float hsx  = hx - x;
+  float hsy  = hy - y;
+  float hlen = sqrt(hsx*hsx + hsy*hsy);
+  float hv   = fabs(hlen) / dt1;
   
   double dir;
   if (bx || by)
-    dir = atan2(sx,sx);
+  dir = atan2(sx,sx);
   else
-    dir = direction;
+  dir = direction;
   
-  double idir;
-  if ( (ix != x) || (iy != y) )
-    idir = atan2(isx,isy);
+  double hdir;
+  if ( (hx != x) || (hy != y) )
+  hdir = atan2(hsx,hsy);
   else
-    idir = direction;
-    
-  printf ("                         direction: %0.2f  dir: %0.2f  idir: %0.2f\n", TO_DEG(direction), TO_DEG(dir), TO_DEG(idir));  
-
-  bool fcode = false; 
+  hdir = direction;
+  
+  bool direction_changed = ( fabs(direction - hdir) > MIN_ANGLE) ? true : false;
+  
+  //printf ("                         direction: %0.2f  dir: %0.2f  idir: %0.2f\n", TO_DEG(direction), TO_DEG(dir), TO_DEG(idir));
+  
+  GCODE current_command = IDLE;
+  
+  if ( (bx || by) && be )  // if x or y changed together with E we are extruding
+  {
+    current_command = EXTRUDE;
+  }
+  else if ( (bx || by) && !be ) // if x or y changed but no extrude its a jump
+  {
+    current_command = MOVE_XY;
+  }
+  else if ( !(bx || by) && be ) // if neither x or y changed but e its a extrude or retract
+  {
+    current_command = MOVE_E;
+  }
+  else if ( bz  && !( bx || by || be))   // here we have a layer change or lift operation
+  {
+    current_command = MOVE_Z;
+  }
+  else if ( bx || by || bz || be )
+  {
+    current_command = IDLE;
+  }
+  else
+  {
+    current_command = IDLE;
+  }
+  
+  bool fcode = false;
+  float vz, ve;
+  int fz, fe;
+  //if ((current_command != last_command) || direction_changed)
+  {
+    switch (last_command)
+    {
+        case MOVE_XY:
+        printf("G1 X%0.3f Y%0.3f F%d ; dt: %0.3f ms speed: %0.2f mm/s angle: %0.2f\n", x,y,f, dt * 1000, v, TO_DEG(dir));
+        gvx = v;
+        gve = 0;
+        gvz = 0;
+        gcode_move_xy++;
+        break;
+        
+        case MOVE_Z:
+        vz = fabs(gz - z) / dt;
+        fz = LIMIT_F(vz * 60);
+        printf("G1 Z%0.3f F%d\n", hz, fz);
+        gvz = v;
+        gvx = 0;
+        gve = 0;
+        gcode_move_z++;
+        break;
+        
+        case MOVE_E:
+        ve = fabs(ge - e) / dt;
+        fe = LIMIT_F(ve * 60);
+        printf ("G1 E%0.3f F%d\n", he, f);
+        gcode_move_e++;
+        break;
+        
+        case EXTRUDE:
+        printf("G1 X%0.3f Y%0.3f E%0.3f F%d ; dt %0.3f ms speed %0.2f mm/s angle: %0.2f\n", x,y,e,f, dt * 1000, v, TO_DEG(dir));
+        gvx = v;
+        gve = fabs(gve - e) / dt ;
+        gvz = 0;
+        gcode_extrude++;
+        break;
+        
+        case HOME:
+        gcode_home++;
+        break;
+        
+        case IDLE:
+        gcode_idle++;
+        break;
+        
+      default:
+        break;
+    }
+    fcode = true;
+  }
+#if 0
   if ( (bx || by) && be )  // if x or y changed together with E we are extruding
   {
     // now we check for direction
-    if ( fabs(direction - idir) > MIN_ANGLE)
-    {  
+    if ( fabs(direction - hdir) > MIN_ANGLE)
+    {
       printf("G1 X%0.3f Y%0.3f E%0.3f F%d ; dt %0.3f ms speed %0.2f mm/s angle: %0.2f\n", x,y,e,f, dt * 1000, v, TO_DEG(dir));
       fcode = true;
-      gvx = v; 
-      gve = fabs(gve - e) / dt ; 
+      gvx = v;
+      gve = fabs(gve - e) / dt ;
       gvz = 0;
     }
   }
   else if ( (bx || by) && !be ) // if x or y changed but no extrude its a jump
-  {   
+  {
     // now we check for direction
     if ( fabs(direction - dir) > MIN_ANGLE)
     {
@@ -233,7 +270,7 @@ static void process(double time)
       gvx = v;
       gve = 0;
       gvz = 0;
-    }   
+    }
   }
   else if ( !(bx || by) && be ) // if neither x or y changed but e its a extrude or retract
   {
@@ -266,8 +303,8 @@ static void process(double time)
   {
     // nothing here - we just idle
   }
-
-  // check if a g-code was spit out, if so we set a new global reference 
+#endif
+  // check if a g-code was spit out, if so we set a new global reference
   if (fcode)
   {
     gx = x;
@@ -278,138 +315,58 @@ static void process(double time)
     direction = dir;
   }
   
-  ix = x;
-  iy = y;
-  ivx = iv;
-
-  // next we get all the rest of the stuff
-#if 0
-  int32_t mstat = UP3D_GetMachineState();
-  if (gmstat != mstat)
-  {
-    gmstat = mstat;
-    printf(";Machine-State (%1d) %-16.16s\n", mstat, UP3D_STR_MACHINE_STATE[mstat]);
-  }
-
-  int32_t pstat = UP3D_GetProgramState();
-  if (gpstat != pstat)
-  {
-    gpstat = pstat;
-    printf(";Program-State (%1d) %-19.19s\n", pstat, UP3D_STR_PROGRAM_STATE[pstat] );
-  }
-
-  int32_t sstat = UP3D_GetSystemState();
-  if (gsstat != sstat)
-  {
-    gsstat = sstat;
-    printf(";System-State (%02d) %-22.22s\n", sstat, UP3D_STR_SYSTEM_STATE[sstat] );
-  }
-#endif
-}
-#endif
-
-static void sigwinch(int sig)
-{
+  hx = x;
+  hy = y;
+  hz = z;
+  he = e;
+  hvx = hv;
+  last_command = current_command;
+  t1 = time;
+  return true;
 }
 
-static void sigfinish(int sig)
+
+void print_usage_and_exit()
 {
-  UP3D_Close();
-  exit(0);
+  printf("Usage: togcode input.capture\n\n");
+  printf("          input.capture:  machine capture file\n");
+  exit(1);
 }
 
 int main(int argc, char *argv[])
 {
-  static struct timeval t0;
-  static struct timeval t1;
-  static double elapsed = 0;
-
-  if( !UP3D_Open() )
-    return -1;
-
-  TT_tagPrinterInfoHeader pihdr;
-  TT_tagPrinterInfoName   piname;
-  TT_tagPrinterInfoData   pidata;
-  TT_tagPrinterInfoSet    pisets[8];
-    
-  if( !UP3D_GetPrinterInfo( &pihdr, &piname, &pidata, pisets ) )
+  if( 2 != argc )
+  print_usage_and_exit();
+  
+  FILE* fcapture = fopen( argv[1], "r" );
+  if( !fcapture )
   {
-    upl_error( "UP printer info error\n" );
-    UP3D_Close();
-    return -1;
+    printf("ERROR: Could not open %s for reading\n\n", argv[1]);
+    print_usage_and_exit();
   }
   
-  steps[0] = pidata.f_steps_mm_x;
-  steps[1] = pidata.f_steps_mm_y;
-  steps[2] = pidata.f_steps_mm_z;
-  steps[3] = pidata.f_steps_mm_x == 160.0 ? 236.0 : 854.0; // fix display for Cetus3D
+  printf("; processing file '%s'\n", argv[1]);
   
-  UP3D_SetParameter(0x94,999); //set best accuracy for reporting position
-
-  signal(SIGINT, sigfinish);   // set sigint handler
-#ifdef SIGWINCH
-  signal(SIGWINCH, sigwinch);  // set sigint handler
-#endif
-
-  gettimeofday(&t0,0);
-
-  //the loop
-  uint32_t state = 0;
-  for(;state !=3 ;)    // run until state is idle
+  char line[1024];
+  long l = 0;;
+  while( fgets(line,sizeof(line),fcapture))
   {
-#if 1    
-    switch( getch() )
+    if( !process(line) )
     {
-      case 0x12:    // CRTL-R
-        fprintf(stderr,"Machine State: %1d %s\n", state, UP3D_STR_MACHINE_STATE[state]);
-        break; // CTRL-R
-
-      case 'p':
-       {
-         UP3D_BLK blk;
-         UP3D_ClearProgramBuf();
-         UP3D_PROG_BLK_Power(&blk,true);UP3D_WriteBlock(&blk);
-         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_StartResumeProgram();
-         UP3D_SetParameter(0x94,999); //set best accuracy for reporting position
-       }
-       break;
-      case 'q':
-       {
-         UP3D_BLK blk;
-         UP3D_ClearProgramBuf();
-         UP3D_PROG_BLK_Power(&blk,false);UP3D_WriteBlock(&blk);
-         UP3D_PROG_BLK_Stop(&blk);UP3D_WriteBlock(&blk);
-         UP3D_StartResumeProgram();
-         sigfinish(0);
-       }
-       break;
-
-      case '0':
-       {
-         UP3D_ClearProgramBuf();
-         UP3D_InsertRomProgram(0);
-         UP3D_StartResumeProgram();
-       }
-       break;
+      printf("ERROR: line %ld\n", l);
+      return (1);
     }
-#endif    
-    gettimeofday(&t1, 0);
-    elapsed += timedifference_msec(t0, t1);
-    t0 = t1;
-    state = capture(elapsed);
-    
-    static int32_t old_state = -1;
-    if (old_state != state) 
-    {
-      // information on state changes is piped to stderr so the main capture can be
-      // redirected from stdout without this info
-      old_state = state;
-      fprintf(stderr,"Machine State: %1d %s\n", state, UP3D_STR_MACHINE_STATE[state]);
-    }
-    //usleep(10000);
+    l++;
   }
-
-  sigfinish(0);
+  fclose( fcapture );
+  printf (";number of input lines: %ld \n", l);
+  printf (";number of g-commands:  %ld \n", gcode_move_xy + gcode_move_z + gcode_move_e + gcode_extrude + gcode_home);
+  printf (";number of move_xy:     %ld \n", gcode_move_xy);
+  printf (";number of move_z:      %ld \n", gcode_move_z);
+  printf (";number of move_e:      %ld \n", gcode_move_e);
+  printf (";number of extrude:     %ld \n", gcode_extrude);
+  printf (";number of home:        %ld \n", gcode_home);
+  printf (";number of idle:        %ld \n", gcode_idle);
+  printf (";number of timelaps:    %ld \n", gcode_timelaps);
   return 0;
 }
