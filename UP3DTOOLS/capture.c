@@ -98,16 +98,6 @@ static int32_t capture(double time)
 }
 
 
-static void sigwinch(int sig)
-{
-}
-
-static void sigfinish(int sig)
-{
-  UP3D_Close();
-  exit(0);
-}
-
 int main(int argc, char *argv[])
 {
   static struct timeval t0;
@@ -136,23 +126,35 @@ int main(int argc, char *argv[])
   
   UP3D_SetParameter(0x94,999); //set best accuracy for reporting position
 
-  signal(SIGINT, sigfinish);   // set sigint handler
-#ifdef SIGWINCH
-  signal(SIGWINCH, sigwinch);  // set sigint handler
-#endif
-
   gettimeofday(&t0,0);
 
   //the loop
   uint32_t state = 0;
   uint32_t samples = 0;
+
+#define PERIOD 2000    // in us
+  int sleeptime = ((PERIOD - 900) < 0) ? 10 : (PERIOD - 900);
+  long hicks = 0;
+  long hangs = 0;
   for(;state !=3 ; samples++)    // run until state is idle
   {
     gettimeofday(&t1, 0);
-    elapsed += timedifference_msec(t0, t1);
+    float diff = timedifference_msec(t0, t1);
+    elapsed += diff;
     t0 = t1;
-    state = capture(elapsed);
+    if (diff * 1000 > PERIOD * 2)
+    {
+      //fprintf(stderr, "Hickup: %0.2f\n", diff);
+      hicks++;
+    }
+
+    if (diff * 1000 > PERIOD * 10)
+    {
+      //fprintf(stderr, "Hang: %0.2f\n", diff);
+      hangs++;
+    }
     
+    state = capture(elapsed);
     static int32_t old_state = -1;
     if (old_state != state) 
     {
@@ -161,10 +163,14 @@ int main(int argc, char *argv[])
       old_state = state;
       fprintf(stderr, "Machine State: %1d %s\n", state, UP3D_STR_MACHINE_STATE[state]);
     }
-    //usleep(10000);
+    sleeptime += 0.2 * (PERIOD - diff * 1000);
+    sleeptime = (sleeptime < 10) ? 10 : ( (sleeptime > PERIOD) ? PERIOD:sleeptime);
+    //fprintf(stderr,"diff: %d us new sleep: %d us\n", (int)(diff * 1000), (int)sleeptime );
+    if (sleeptime > 0)
+      usleep(sleeptime);
   }
-  fprintf(stderr, "samples recorded: %d,  total time: %0.3f s, %d samples/s\n",
-    samples, elapsed / 1000, (int)(samples/elapsed*1000));    
-  sigfinish(0);
+  fprintf(stderr, "samples recorded: %d,  total time: %0.3f s, %d samples/s  hicks: %ld hangs:%ld\n",
+    samples, elapsed / 1000, (int)(samples/elapsed*1000), hicks, hangs);
+  
   return 0;
 }
