@@ -54,7 +54,8 @@ typedef enum  {
   MOVE_E,
   EXTRUDE,
   HOME,
-  IDLE
+  IDLE,
+  START
 } GCODE;
 
 // for statistics
@@ -66,6 +67,33 @@ long gcode_extrude = 0;
 long gcode_home = 0;
 long gcode_idle = 0;
 long gcode_timelaps = 0;
+long gcode_filter_e = 0;
+
+
+// determin the type of command by the flags
+GCODE get_cmd(bool bx, bool by, bool bz, bool be, GCODE last)
+{
+  GCODE cmd = last;
+
+  if ( (bx || by) && be)  // if x or y changed together with E we are extruding
+  {
+    cmd = EXTRUDE;
+  }
+  else if ( (bx || by) && !be) // if x or y changed but no extrude its a jump
+  {
+    //    cmd = MOVE_XY;
+    cmd = EXTRUDE;
+  }
+  else if ( be)    // if  e changed its an extrude or retract
+  {
+    cmd = MOVE_E;
+  }
+  else if ( bz )   // here we have a layer change or lift operation
+  {
+    cmd = MOVE_Z;
+  }
+  return cmd;
+}
 
 static bool process(char* line)
 {
@@ -100,7 +128,7 @@ static bool process(char* line)
   static float hz = 0;
   static float he = 0;
   static float hvx = 0;  //momentary speed
-  static GCODE last_command = HOME;
+  static GCODE last_command = START;
   
   static int32_t gmstat;
   
@@ -142,6 +170,8 @@ static bool process(char* line)
   bool bz = (gz != z) ? true: false;
   bool be = (ge != e) ? true: false;
   
+  //fprintf(stderr,"xy%d z%d e%d\n", bx || by, bz, be);
+  
   // calculate parameters based on last g-command
   float sx  = gx-x;
   float sy  = gy-y;
@@ -171,57 +201,36 @@ static bool process(char* line)
   
   //printf ("                         direction: %0.2f  dir: %0.2f  idir: %0.2f\n", TO_DEG(direction), TO_DEG(dir), TO_DEG(idir));
   
-  GCODE current_command = IDLE;
-  
-  if ( (bx || by) && be)  // if x or y changed together with E we are extruding
-  {
-    current_command = EXTRUDE;
-  }
-  else if ( (bx || by) && !be) // if x or y changed but no extrude its a jump
-  {
-    current_command = MOVE_XY;
-  }
-  else if ( be)    // if  e changed its an extrude or retract
-  {
-    current_command = MOVE_E;
-  }
-  else if ( bz )   // here we have a layer change or lift operation
-  {
-    current_command = MOVE_Z;
-  }
-  else if ( bx || by || bz || be )
-  {
-    current_command = IDLE;
-  }
-  else
-  {
-    current_command = IDLE;
-  }
-  
   bool fcode = false;
   float vz, ve;
   int fz, fe;
-  if ((current_command != last_command) || direction_changed)
-  {
-    GCODE command = last_command;
-    bool finished = true;
-    do
+  
+  GCODE current_command;
+  
+  current_command = get_cmd(bx, by, bz, be, last_command);
+  
+//    printf("last: %d  current: %d flags: x%d y%d z%d e%d dir%d\n", last_command, current_command, bx, by, bz, be, direction_changed);
+    
+    if ( ((current_command != last_command) && (current_command != IDLE))
+      || (direction_changed && ((current_command == MOVE_XY) || (current_command == EXTRUDE))) )
     {
-      switch (command)
+      // process direction changed just once
+      if (direction_changed)
+        direction_changed = false;
+      switch (last_command)
       {
+
+        case START:
         case MOVE_XY:
-          printf("G1 X%0.4f Y%0.4f F%d ; dt: %0.3f ms speed: %0.2f mm/s angle: %0.2f\n", GCODE_X(x),GCODE_Y(y),f, dt * 1000, v, TO_DEG(dir));
+          printf("G1 X%0.4f Y%0.4f E%0.4f F%d ; dt: %0.3f ms speed: %0.2f mm/s angle: %0.2f\n", GCODE_X(x),GCODE_Y(y), e, f, dt * 1000, v, TO_DEG(dir));
           gvx = v;
           gve = 0;
           gvz = 0;
           gcode_move_xy++;
-          if (bz)
-          {
-            finished = false;
-            command = MOVE_Z;
-          }
+          bx = by = false;
+          last_command = get_cmd(bx, by, bz, be, MOVE_XY);
           break;
-          
+
         case MOVE_Z:
           vz = fabs(gz - z) / dt;
           fz = LIMIT_F(vz * 60);
@@ -230,41 +239,41 @@ static bool process(char* line)
           gvx = 0;
           gve = 0;
           gcode_move_z++;
-          finished = true;
-          if (bx || by)
-          {
-            if (be)
-              command 
-          }
+          bz = false;
+          last_command = get_cmd(bx, by, bz, be, MOVE_Z);
           break;
-          
+
         case MOVE_E:
           ve = fabs(ge - e) / dt;
           fe = LIMIT_F(ve * 60);
           printf ("G1 E%0.5f F%d\n", he, f);
           gcode_move_e++;
-          if (bz)
-          {
-            finished = false;
-            command = MOVE_Z;
-          }
+          be = false;
+          last_command = get_cmd(bx, by, bz, be, EXTRUDE);
           break;
-          
+
+//        case START:
+//        case MOVE_XY:
         case EXTRUDE:
-          printf("G1 X%0.4f Y%0.4f E%0.4f F%d ; dt %0.3f ms speed %0.2f mm/s angle: %0.2f\n", GCODE_X(x),GCODE_Y(y),e,f, dt * 1000, v, TO_DEG(dir));
+          if (be)
+            printf("G1 X%0.4f Y%0.4f E%0.4f F%d ; dt %0.3f ms speed %0.2f mm/s angle: %0.2f\n", GCODE_X(x),GCODE_Y(y),e,f, dt * 1000, v, TO_DEG(dir));
+          else
+            printf("G1 X%0.4f Y%0.4f F%d ; dt %0.3f ms speed %0.2f mm/s angle: %0.2f\n", GCODE_X(x),GCODE_Y(y),f, dt * 1000, v, TO_DEG(dir));
           gvx = v;
           gve = fabs(gve - e) / dt ;
           gvz = 0;
-          gcode_extrude++;
-          if (bz)
-          {
-            finished = false;
-            command = MOVE_Z;
-          }
+          if (be)
+            gcode_extrude++;
+          else
+            gcode_move_xy++;
+          bx = by = be = false;
+          last_command = get_cmd(bx, by, bz, be, EXTRUDE);
           break;
           
+          // not yet implemented
         case HOME:
           gcode_home++;
+          last_command = IDLE;
           break;
           
         case IDLE:
@@ -274,9 +283,9 @@ static bool process(char* line)
         default:
           break;
       }
-    } while (!finished);
-    fcode = true;
-  }
+      fcode = true;
+    }
+  //} while (current_command != IDLE);
 
   // check if a g-code was spit out, if so we set a new global reference
   if (fcode)
@@ -294,17 +303,124 @@ static bool process(char* line)
   hz = z;
   he = e;
   hvx = hv;
-  last_command = current_command;
   t1 = time;
   return true;
 }
 
 
+// simple input averaging filter
+void filter_all (char * line)
+{
+  
+  static float _x = 0;
+  static float _y = 0;
+  static float _z = 0;
+  static float _e = 0;
+  static double _time = 0;;
+  static char _state[32] = "delay1";
+  
+  static float __x = 0;
+  static float __y = 0;
+  static float __z = 0;
+  static float __e = 0;
+  static double __time = 0;;
+  static char __state[32] = "delay2";
+  
+  double time;
+  float  x, y, z, e;
+  char state[32];
+  
+  if ( sscanf(line, "%lf,%f,%f,%f,%f,%[^,\t\n]", &time,&x,&y,&z,&e, state) != 6)
+    return; // just skip a non valid line
+  
+  // check for invalid samples and replace with previouse one
+  x = (x == 0) ? _x : x;
+  y = (y == 0) ? _y : y;
+  z = (z == 0) ? _z : z;
+  e = (e == 0) ? _e : e;
+  
+  float x_ = (x + _x + __x) / 3;
+  float y_ = (y + _y + __y) / 3;
+  float z_ = (z + _z + __z) / 3;
+  float e_ = (e + _e + __e) / 3;
+  double time_ = _time;
+  char state_[32]; strcpy(state_, _state);
+  
+  if (e_ != __e)
+    gcode_filter_e++;
+  
+  __x = _x;
+  __y = _y;
+  __z = _z;
+  __e = _e;
+  __time = _time;
+  strcpy(__state, _state);
+  
+  
+  _x = x;
+  _y = y;
+  _z = z;
+  _e = e;
+  _time = time;
+  strcpy(_state, state);
+  
+  sprintf(line, "%0.2lf,%0.4f,%0.4f,%0.4f,%05f,%s\n", time_, x_, y_, z_, e_, state_);
+  return;
+}
+
+
+double approximate (double avg, double input, double n)
+{
+  avg -= avg/n;
+  avg += input/n;
+  return avg;
+}
+
+// input filter with approximation of a rolling average over n
+void filter_approximate (char * line)
+{
+  static float _x = 0;
+  static float _y = 0;
+  static float _z = 0;
+  static float _e = 0;
+  static double _t = 0;
+  
+  double time;
+  float  x, y, z, e;
+  char state[32];
+  
+  if ( sscanf(line, "%lf,%f,%f,%f,%f,%[^,\t\n]", &time,&x,&y,&z,&e, state) != 6)
+    return; // just skip a non valid line
+  
+  // check for invalid samples and replace with previouse one
+  x = (x == 0) ? _x : x;
+  y = (y == 0) ? _y : y;
+  z = (z == 0) ? _z : z;
+  e = (e == 0) ? _e : e;
+  
+  double n = (time - _t) * 3;  // average over 3 ms
+  
+  n = n < 2.0 ? 2.0: n; //minimum factor 2
+ 
+  _x = approximate(_x, x, n);
+  _y = approximate(_y, y, n);
+  _z = approximate(_z, z, n);
+  _e = (_e == e) ? e : approximate(_e, e, n);
+  _t = time;
+  
+  if (_e != e)
+    gcode_filter_e++;
+  
+  sprintf(line, "%0.2lf,%0.4f,%0.4f,%0.4f,%05f,%s\n", time, _x, _y, _z, _e, state);
+  return;
+}
+
+
 void print_usage_and_exit()
 {
-  printf("Usage: togcode input.capture\n\n");
-  printf("          input.capture:  machine capture file\n");
-  exit(1);
+  printf("Usage: togcode input.capture [average] \n\n");
+  printf("         input.capture:  machine capture file\n");
+  exit(0);
 }
 
 int main(int argc, char *argv[])
@@ -325,12 +441,18 @@ int main(int argc, char *argv[])
   long l = 0;;
   while( fgets(line,sizeof(line),fcapture))
   {
-    if( !process(line) )
+    //static int subsampling = 0;
+    //if (subsampling++ % 2)
     {
-      printf("ERROR: line %ld\n", l);
-      return (1);
+      //filter_all(line);
+      filter_approximate(line);
+      if( !process(line) )
+      {
+        printf("ERROR: line %ld\n", l);
+        return (1);
+      }
+      l++;
     }
-    l++;
   }
   fclose( fcapture );
   printf (";number of input lines: %ld \n", l);
@@ -342,5 +464,6 @@ int main(int argc, char *argv[])
   printf (";number of home:        %ld \n", gcode_home);
   printf (";number of idle:        %ld \n", gcode_idle);
   printf (";number of timelaps:    %ld \n", gcode_timelaps);
-  return 0;
+  printf (";number of filter_e:    %ld \n", gcode_filter_e);
+  return 1;
 }
