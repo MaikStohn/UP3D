@@ -30,6 +30,10 @@
 
 #define upl_error(s) { printf("ERROR: %s\n",s); }
 
+// translation to the coordinates
+#define GCODE_X(x) (-(x))
+#define GCODE_Y(y) (+(y))
+#define GCODE_Z(z) ((z)+182)
 
 #define MAX_F (200*60)    // mm / min
 #define LIMIT_F(f) ( (f) > MAX_F ? MAX_F:(f))
@@ -169,19 +173,19 @@ static bool process(char* line)
   
   GCODE current_command = IDLE;
   
-  if ( (bx || by) && be )  // if x or y changed together with E we are extruding
+  if ( (bx || by) && be)  // if x or y changed together with E we are extruding
   {
     current_command = EXTRUDE;
   }
-  else if ( (bx || by) && !be ) // if x or y changed but no extrude its a jump
+  else if ( (bx || by) && !be) // if x or y changed but no extrude its a jump
   {
     current_command = MOVE_XY;
   }
-  else if ( !(bx || by) && be ) // if neither x or y changed but e its a extrude or retract
+  else if ( be)    // if  e changed its an extrude or retract
   {
     current_command = MOVE_E;
   }
-  else if ( bz  && !( bx || by || be))   // here we have a layer change or lift operation
+  else if ( bz )   // here we have a layer change or lift operation
   {
     current_command = MOVE_Z;
   }
@@ -197,113 +201,83 @@ static bool process(char* line)
   bool fcode = false;
   float vz, ve;
   int fz, fe;
-  //if ((current_command != last_command) || direction_changed)
+  if ((current_command != last_command) || direction_changed)
   {
-    switch (last_command)
+    GCODE command = last_command;
+    bool finished = true;
+    do
     {
+      switch (command)
+      {
         case MOVE_XY:
-        printf("G1 X%0.3f Y%0.3f F%d ; dt: %0.3f ms speed: %0.2f mm/s angle: %0.2f\n", x,y,f, dt * 1000, v, TO_DEG(dir));
-        gvx = v;
-        gve = 0;
-        gvz = 0;
-        gcode_move_xy++;
-        break;
-        
+          printf("G1 X%0.4f Y%0.4f F%d ; dt: %0.3f ms speed: %0.2f mm/s angle: %0.2f\n", GCODE_X(x),GCODE_Y(y),f, dt * 1000, v, TO_DEG(dir));
+          gvx = v;
+          gve = 0;
+          gvz = 0;
+          gcode_move_xy++;
+          if (bz)
+          {
+            finished = false;
+            command = MOVE_Z;
+          }
+          break;
+          
         case MOVE_Z:
-        vz = fabs(gz - z) / dt;
-        fz = LIMIT_F(vz * 60);
-        printf("G1 Z%0.3f F%d\n", hz, fz);
-        gvz = v;
-        gvx = 0;
-        gve = 0;
-        gcode_move_z++;
-        break;
-        
+          vz = fabs(gz - z) / dt;
+          fz = LIMIT_F(vz * 60);
+          printf("G1 Z%0.4f F%d\n", GCODE_Z(hz), fz);
+          gvz = v;
+          gvx = 0;
+          gve = 0;
+          gcode_move_z++;
+          finished = true;
+          if (bx || by)
+          {
+            if (be)
+              command 
+          }
+          break;
+          
         case MOVE_E:
-        ve = fabs(ge - e) / dt;
-        fe = LIMIT_F(ve * 60);
-        printf ("G1 E%0.3f F%d\n", he, f);
-        gcode_move_e++;
-        break;
-        
+          ve = fabs(ge - e) / dt;
+          fe = LIMIT_F(ve * 60);
+          printf ("G1 E%0.5f F%d\n", he, f);
+          gcode_move_e++;
+          if (bz)
+          {
+            finished = false;
+            command = MOVE_Z;
+          }
+          break;
+          
         case EXTRUDE:
-        printf("G1 X%0.3f Y%0.3f E%0.3f F%d ; dt %0.3f ms speed %0.2f mm/s angle: %0.2f\n", x,y,e,f, dt * 1000, v, TO_DEG(dir));
-        gvx = v;
-        gve = fabs(gve - e) / dt ;
-        gvz = 0;
-        gcode_extrude++;
-        break;
-        
+          printf("G1 X%0.4f Y%0.4f E%0.4f F%d ; dt %0.3f ms speed %0.2f mm/s angle: %0.2f\n", GCODE_X(x),GCODE_Y(y),e,f, dt * 1000, v, TO_DEG(dir));
+          gvx = v;
+          gve = fabs(gve - e) / dt ;
+          gvz = 0;
+          gcode_extrude++;
+          if (bz)
+          {
+            finished = false;
+            command = MOVE_Z;
+          }
+          break;
+          
         case HOME:
-        gcode_home++;
-        break;
-        
+          gcode_home++;
+          break;
+          
         case IDLE:
-        gcode_idle++;
-        break;
-        
-      default:
-        break;
-    }
+          gcode_idle++;
+          break;
+          
+        default:
+          break;
+      }
+    } while (!finished);
     fcode = true;
   }
-#if 0
-  if ( (bx || by) && be )  // if x or y changed together with E we are extruding
-  {
-    // now we check for direction
-    if ( fabs(direction - hdir) > MIN_ANGLE)
-    {
-      printf("G1 X%0.3f Y%0.3f E%0.3f F%d ; dt %0.3f ms speed %0.2f mm/s angle: %0.2f\n", x,y,e,f, dt * 1000, v, TO_DEG(dir));
-      fcode = true;
-      gvx = v;
-      gve = fabs(gve - e) / dt ;
-      gvz = 0;
-    }
-  }
-  else if ( (bx || by) && !be ) // if x or y changed but no extrude its a jump
-  {
-    // now we check for direction
-    if ( fabs(direction - dir) > MIN_ANGLE)
-    {
-      printf("G1 X%0.3f Y%0.3f F%d ; dt: %0.3f ms speed: %0.2f mm/s angle: %0.2f\n", x,y,f, dt * 1000, v, TO_DEG(dir));
-      fcode = true;
-      gvx = v;
-      gve = 0;
-      gvz = 0;
-    }
-  }
-  else if ( !(bx || by) && be ) // if neither x or y changed but e its a extrude or retract
-  {
-    float ve = fabs(ge-e) / dt;
-    int   f = LIMIT_F(ve * 60);
-    
-    printf("G1 E%0.3f F%d ; dt: %0.3f ms speed: %0.2f mm/s\n", e, f, dt * 1000, v);
-    fcode = true;
-    gve = (gve + v)/2;
-    gvx = 0;
-    gvz = 0;
-  }
-  else if ( bz  && !( bx || by || be))   // here we have a layer change or lift operation
-  {
-    float v = fabs(gz - z) / dt;
-    int   f = LIMIT_F(v * 60);
-    
-    printf("G1 Z%0.3f F%d ; dt: %0.3f ms speed: %0.2f mm/s\n", z, f, dt * 1000, v);
-    fcode = true;
-    
-    gvz = (gvz + v)/2;
-    gvx = 0;
-    gve = 0;
-  }
-  else if ( bx || by || bz || be )
-  {
-    printf("; unknown move\n");
-  }
-  else
-  {
-    // nothing here - we just idle
-  }
-#endif
+
   // check if a g-code was spit out, if so we set a new global reference
   if (fcode)
   {
