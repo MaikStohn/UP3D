@@ -110,7 +110,7 @@ static bool process(char* line)
   return true; // just skip a non valid line
   
   //echo for debugging
-  printf(";%s", line);
+  //printf(";%s", line);
   
   // parameters of last g-code
   static float  gx = 0;
@@ -305,67 +305,6 @@ static bool process(char* line)
   hvx = hv;
   t1 = time;
   return true;
-}
-
-
-// simple input averaging filter
-void filter_all (char * line)
-{
-  
-  static float _x = 0;
-  static float _y = 0;
-  static float _z = 0;
-  static float _e = 0;
-  static double _time = 0;;
-  static char _state[32] = "delay1";
-  
-  static float __x = 0;
-  static float __y = 0;
-  static float __z = 0;
-  static float __e = 0;
-  static double __time = 0;;
-  static char __state[32] = "delay2";
-  
-  double time;
-  float  x, y, z, e;
-  char state[32];
-  
-  if ( sscanf(line, "%lf,%f,%f,%f,%f,%[^,\t\n]", &time,&x,&y,&z,&e, state) != 6)
-    return; // just skip a non valid line
-  
-  // check for invalid samples and replace with previouse one
-  x = (x == 0) ? _x : x;
-  y = (y == 0) ? _y : y;
-  z = (z == 0) ? _z : z;
-  e = (e == 0) ? _e : e;
-  
-  float x_ = (x + _x + __x) / 3;
-  float y_ = (y + _y + __y) / 3;
-  float z_ = (z + _z + __z) / 3;
-  float e_ = (e + _e + __e) / 3;
-  double time_ = _time;
-  char state_[32]; strcpy(state_, _state);
-  
-  if (e_ != __e)
-    gcode_filter_e++;
-  
-  __x = _x;
-  __y = _y;
-  __z = _z;
-  __e = _e;
-  __time = _time;
-  strcpy(__state, _state);
-  
-  
-  _x = x;
-  _y = y;
-  _z = z;
-  _e = e;
-  _time = time;
-  strcpy(_state, state);
-  
-  sprintf(line, "%0.2lf,%0.4f,%0.4f,%0.4f,%05f,%s\n", time_, x_, y_, z_, e_, state_);
-  return;
 }
 
 
