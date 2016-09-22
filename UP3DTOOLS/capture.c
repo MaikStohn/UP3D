@@ -79,14 +79,14 @@ static int32_t capture(double time)
   int32_t mstat = UP3D_GetMachineState();
 //  int32_t pstat = UP3D_GetProgramState();
 //  int32_t sstat = UP3D_GetSystemState();
-  printf("%0.3f,%0.3f,%0.3f,%0.3f,%0.3f,%s\n"
+  printf("%0.4f,%0.4f,%0.4f,%0.4f,%0.5f,%s\n"
     ,time, x,y,z,e
     ,UP3D_STR_MACHINE_STATE[mstat]
 /*    ,UP3D_STR_PROGRAM_STATE[pstat] */
 /*    ,UP3D_STR_SYSTEM_STATE[sstat] */
     );
 #else
-  printf("%0.3f,%0.3f,%0.3f,%0.3f,%0.3f\n",
+  printf("%0.4f,%0.4f,%0.4f,%0.4f,%0.5f\n",
     time, x,y,z,e );
 #endif
 
