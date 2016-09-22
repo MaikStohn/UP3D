@@ -127,6 +127,18 @@ int main(int argc, char *argv[])
   UP3D_SetParameter(0x94,999); //set best accuracy for reporting position
 
   gettimeofday(&t0,0);
+  
+  printf("; capture start time: %s", ctime((const time_t *) &t0.tv_sec));
+  printf("; PrinterModel=%s\n", piname.printer_name);
+  printf("; PrinterID=%d\n", pihdr.u32_printerid);
+  printf("; ROMVersion=%f\n", pihdr.f_rom_version);
+  printf("; max_x=%f\n", pidata.f_max_x);
+  printf("; max_y=%f\n", pidata.f_max_y);
+  printf("; max_z=%f\n", pidata.f_max_z);
+  printf("; steps_mm_x=%f\n", steps[0]);
+  printf("; steps_mm_y=%f\n", steps[1]);
+  printf("; steps_mm_z=%f\n", steps[2]);
+  printf("; steps_mm_a=%f\n", steps[3]);
 
   //the loop
   uint32_t state = 0;
