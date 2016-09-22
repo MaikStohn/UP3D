@@ -33,7 +33,7 @@
 // translation to the coordinates
 #define GCODE_X(x) (-(x))
 #define GCODE_Y(y) (+(y))
-#define GCODE_Z(z) ((z)+182)
+#define GCODE_Z(z) ((z)+nozzle_height)
 
 #define MAX_F (200*60)    // mm / min
 #define LIMIT_F(f) ( (f) > MAX_F ? MAX_F:(f))
@@ -41,12 +41,7 @@
 #define MAX_A (150*60)   // mm/s2
 #define LIMIT_A(a) ( (a) > MAX_A ? MAX_A:(a))
 
-// smales angle we can discriminate
-// is defined by the max travel speed of the printer (200mm/s)
-// and the sample periode (1ms)
-// and the step resolution (1/854 or 1/160 on the cetus printer)
-#define MIN_ANGLE (M_PI/3600)  // we give it a try with this
-#define TO_DEG(rad) (((rad) > 0 ? (rad) : (2*M_PI + (rad))) * 360 / (2*M_PI))
+#define TO_DEG(rad) ((rad)*(180.0/M_PI))
 
 typedef enum  {
   MOVE_XY,
@@ -57,6 +52,49 @@ typedef enum  {
   IDLE,
   START
 } GCODE;
+
+typedef struct CAP_SETTINGS {
+  char      printer_name[63];
+  uint32_t  u32_printerid;
+  float     f_rom_version;
+  float     f_max_x;
+  float     f_max_y;
+  float     f_max_z;
+  float     f_steps_mm_x;
+  float     f_steps_mm_y;
+  float     f_steps_mm_z;
+  float     f_steps_mm_a;
+} CAP_SETTINGS;
+
+// default settings
+static CAP_SETTINGS cap_settings = {
+  "UP Mini(A)", // PrinterName
+  10104,        // PrinterID
+  6.11,         // ROMVersion
+  -120.0,       // max_x
+  120.0,        // max_y
+  130.0,        // max_z
+  854.0,        // steps_mm_x
+  854.0,        // steps_mm_y
+  854.0,        // steps_mm_z
+  854.0         // steps_mm_a
+};
+
+static const char cap_settings_keys[10][32] = {
+  "; PrinterModel=%[^\t\n]",
+  "; PrinterID=%s",
+  "; ROMVersion=%s",
+  "; max_x=%s",
+  "; max_y=%s",
+  "; max_z=%s",
+  "; steps_mm_x=%s",
+  "; steps_mm_y=%s",
+  "; steps_mm_z=%s",
+  "; steps_mm_a=%s"
+};
+
+// globals
+float nozzle_height = 0; // used to translate Z to the build plate
 
 // for statistics
 long gcode_lines = 0;
@@ -69,6 +107,14 @@ long gcode_idle = 0;
 long gcode_timelaps = 0;
 long gcode_filter_e = 0;
 
+
+
+double approximate (double avg, double input, double n)
+{
+  avg -= avg/n;
+  avg += input/n;
+  return avg;
+}
 
 // determin the type of command by the flags
 GCODE get_cmd(bool bx, bool by, bool bz, bool be, GCODE last)
@@ -95,6 +141,68 @@ GCODE get_cmd(bool bx, bool by, bool bz, bool be, GCODE last)
   return cmd;
 }
 
+static bool get_settings(char* line)
+{
+  int i = 0;
+  int ret = 1;
+  bool done = false;
+  for ( ; i< sizeof(cap_settings_keys); i++)
+  {
+    char val[1024];
+    if (sscanf(line, cap_settings_keys[i], val) == 1)
+    {
+      switch (i)
+      {
+        case 0:    // PrinterModel
+          strcpy(cap_settings.printer_name, val);
+          done = true;
+          break;
+        case 1:    // PrinterID
+          ret = sscanf(val, "%d", &cap_settings.u32_printerid);
+          done = true;
+          break;
+        case 2:    // ROMVersion
+          ret = sscanf(val,"%f", &cap_settings.f_rom_version);
+          done = true;
+          break;
+        case 3:    // max_x
+          ret = sscanf(val,"%f", &cap_settings.f_max_x);
+          done = true;
+          break;
+        case 4:    // max_y
+          ret = sscanf(val,"%f", &cap_settings.f_max_y);
+          done = true;
+          break;
+        case 5:    // max_z
+          ret = sscanf(val,"%f", &cap_settings.f_max_z);
+          done = true;
+          break;
+        case 6:    // steps_mm_x
+          ret = sscanf(val,"%f", &cap_settings.f_steps_mm_x);
+          done = true;
+          break;
+        case 7:    // steps_mm_y
+          ret = sscanf(val,"%f", &cap_settings.f_steps_mm_y);
+          done = true;
+          break;
+        case 8:    // steps_mm_z
+          ret = sscanf(val,"%f", &cap_settings.f_steps_mm_z);
+          done = true;
+          break;
+        case 9:    // steps_mm_a
+          ret = sscanf(val,"%f", &cap_settings.f_steps_mm_a);
+          done = true;
+        default:
+          break;
+      }
+    }
+    if (done)
+      break;
+  }
+  return ret ? true: false;
+}
+
+
 static bool process(char* line)
 {
   static bool init = false;
@@ -107,7 +215,7 @@ static bool process(char* line)
   char state[32];
   
   if ( sscanf(line, "%lf,%f,%f,%f,%f,%[^,\t\n]", &time,&x,&y,&z,&e, state) != 6)
-  return true; // just skip a non valid line
+    return false; // just skip a non valid line
   
   //echo for debugging
   //printf(";%s", line);
@@ -149,14 +257,6 @@ static bool process(char* line)
     hy = gy;
     return true;
   }
-
-#if 0
-  // we average the samples here to get a more clean signal
-  x = (x + hx) / 2;
-  y = (y + hy) / 2;
-  z = (z + hz) / 2;
-  e = (e + he) / 2;
-#endif
   
   float dt = (time - t0) / 1000.0f;    // time in seconds since last g-code command
   float dt1 = (time - t1) / 1000.0f;   // time since last call
@@ -185,21 +285,16 @@ static bool process(char* line)
   float hlen = sqrt(hsx*hsx + hsy*hsy);
   float hv   = fabs(hlen) / dt1;
   
-  double dir;
-  if (bx || by)
-  dir = atan2(sx,sx);
-  else
-  dir = direction;
+  double dir = atan2(sy,sx);
   
-  double hdir;
-  if ( (hx != x) || (hy != y) )
-  hdir = atan2(hsx,hsy);
-  else
-  hdir = direction;
+  static double _hdir = 0;
+  double hdir = atan2(hsy,hsx);
+  double n = dt1 * 3;
+  n = (n< 2) ? 2 : n;
+  hdir = approximate(_hdir, hdir, 2);
+  _hdir = dir;
   
-  bool direction_changed = ( fabs(direction - hdir) > MIN_ANGLE) ? true : false;
-  
-  //printf ("                         direction: %0.2f  dir: %0.2f  idir: %0.2f\n", TO_DEG(direction), TO_DEG(dir), TO_DEG(idir));
+  bool direction_changed = ( fabs(dir - hdir) >= atan(1.0l/20/len) ) ? true : false;
   
   bool fcode = false;
   float vz, ve;
@@ -214,9 +309,6 @@ static bool process(char* line)
     if ( ((current_command != last_command) && (current_command != IDLE))
       || (direction_changed && ((current_command == MOVE_XY) || (current_command == EXTRUDE))) )
     {
-      // process direction changed just once
-      if (direction_changed)
-        direction_changed = false;
       switch (last_command)
       {
 
@@ -256,7 +348,12 @@ static bool process(char* line)
 //        case MOVE_XY:
         case EXTRUDE:
           if (be)
+          {
             printf("G1 X%0.4f Y%0.4f E%0.4f F%d ; dt %0.3f ms speed %0.2f mm/s angle: %0.2f\n", GCODE_X(x),GCODE_Y(y),e,f, dt * 1000, v, TO_DEG(dir));
+            if (nozzle_height == 0)
+              nozzle_height = -gz;
+            //nozzle_height =  gz < -nozzle_height ? -gz : nozzle_height;
+          }
           else
             printf("G1 X%0.4f Y%0.4f F%d ; dt %0.3f ms speed %0.2f mm/s angle: %0.2f\n", GCODE_X(x),GCODE_Y(y),f, dt * 1000, v, TO_DEG(dir));
           gvx = v;
@@ -285,7 +382,6 @@ static bool process(char* line)
       }
       fcode = true;
     }
-  //} while (current_command != IDLE);
 
   // check if a g-code was spit out, if so we set a new global reference
   if (fcode)
@@ -307,13 +403,6 @@ static bool process(char* line)
   return true;
 }
 
-
-double approximate (double avg, double input, double n)
-{
-  avg -= avg/n;
-  avg += input/n;
-  return avg;
-}
 
 // input filter with approximation of a rolling average over n
 void filter_approximate (char * line)
@@ -365,7 +454,7 @@ void print_usage_and_exit()
 int main(int argc, char *argv[])
 {
   if( 2 != argc )
-  print_usage_and_exit();
+    print_usage_and_exit();
   
   FILE* fcapture = fopen( argv[1], "r" );
   if( !fcapture )
@@ -380,18 +469,16 @@ int main(int argc, char *argv[])
   long l = 0;;
   while( fgets(line,sizeof(line),fcapture))
   {
-    //static int subsampling = 0;
-    //if (subsampling++ % 2)
+    filter_approximate(line);
+    if( !process(line) )
     {
-      //filter_all(line);
-      filter_approximate(line);
-      if( !process(line) )
+      if (!get_settings(line))
       {
         printf("ERROR: line %ld\n", l);
         return (1);
       }
-      l++;
     }
+    l++;
   }
   fclose( fcapture );
   printf (";number of input lines: %ld \n", l);
@@ -403,6 +490,19 @@ int main(int argc, char *argv[])
   printf (";number of home:        %ld \n", gcode_home);
   printf (";number of idle:        %ld \n", gcode_idle);
   printf (";number of timelaps:    %ld \n", gcode_timelaps);
-  printf (";number of filter_e:    %ld \n", gcode_filter_e);
+  printf (";nozzle_height:         %0.2f \n", nozzle_height);
+
+/*
+  printf("; PrinterModel=%s\n", cap_settings.printer_name);
+  printf("; PrinterID=%d\n", cap_settings.u32_printerid);
+  printf("; ROMVersion=%f\n", cap_settings.f_rom_version);
+  printf("; max_x=%f\n", cap_settings.f_max_x);
+  printf("; max_y=%f\n", cap_settings.f_max_y);
+  printf("; max_z=%f\n", cap_settings.f_max_z);
+  printf("; steps_mm_x=%f\n", cap_settings.f_steps_mm_x);
+  printf("; steps_mm_y=%f\n", cap_settings.f_steps_mm_y);
+  printf("; steps_mm_z=%f\n", cap_settings.f_steps_mm_z);
+  printf("; steps_mm_a=%f\n", cap_settings.f_steps_mm_a);
+*/
   return 1;
 }
