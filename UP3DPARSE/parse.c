@@ -302,9 +302,9 @@ void _dat_cmd_MoveL( int16_t p1, int16_t p2, int16_t p3, int16_t p4, int16_t p5,
   _speedE = (vA + aA * t)/512.0;
 */
 
-  int32_t sx = floor((float)((p3*p1+p6*p1*p1/2))/512);
-  int32_t sy = floor((float)((p4*p1+p7*p1*p1/2))/512);
-  int32_t sa = floor((float)((p5*p1+p8*p1*p1/2))/512);
+  int32_t sx = floor((float)((p3*p1+p6*(p1-1)*p1/2))/512);
+  int32_t sy = floor((float)((p4*p1+p7*(p1-1)*p1/2))/512);
+  int32_t sa = floor((float)((p5*p1+p8*(p1-1)*p1/2))/512);
   double r1 = sx/STEPS_X;
   double r2 = sy/STEPS_Y;
   double r3 = sa/STEPS_E;
