@@ -80,7 +80,7 @@ static CAP_SETTINGS cap_settings = {
   854.0         // steps_mm_a
 };
 
-static const char cap_settings_keys[10][32] = {
+static const char cap_settings_keys[][32] = {
   "; PrinterModel=%[^\t\n]",
   "; PrinterID=%s",
   "; ROMVersion=%s",
@@ -146,7 +146,7 @@ static bool get_settings(char* line)
   int i = 0;
   int ret = 1;
   bool done = false;
-  for ( ; i< sizeof(cap_settings_keys); i++)
+  for ( ; i< (sizeof (cap_settings_keys) / sizeof (cap_settings_keys[0])) ; i++)
   {
     char val[1024];
     if (sscanf(line, cap_settings_keys[i], val) == 1)
@@ -192,7 +192,8 @@ static bool get_settings(char* line)
         case 9:    // steps_mm_a
           ret = sscanf(val,"%f", &cap_settings.f_steps_mm_a);
           done = true;
-        default:
+        default:  // unknown
+          done = true;
           break;
       }
     }
@@ -289,12 +290,12 @@ static bool process(char* line)
   
   static double _hdir = 0;
   double hdir = atan2(hsy,hsx);
-  double n = dt1 * 3;
+  double n = dt1 * (480.0/cap_settings.f_steps_mm_x);
   n = (n< 2) ? 2 : n;
-  hdir = approximate(_hdir, hdir, 2);
+hdir = approximate(_hdir, hdir, n);
   _hdir = dir;
   
-  bool direction_changed = ( fabs(dir - hdir) >= atan(1.0l/20/len) ) ? true : false;
+  bool direction_changed = ( fabs(dir - hdir) >= atan(1.0l/(0.125 * cap_settings.f_steps_mm_x)/len) ) ? true : false;
   
   bool fcode = false;
   float vz, ve;
@@ -425,11 +426,10 @@ void filter_approximate (char * line)
   y = (y == 0) ? _y : y;
   z = (z == 0) ? _z : z;
   e = (e == 0) ? _e : e;
-  
-  double n = (time - _t) * 3;  // average over 3 ms
-  
+
+  double n = (time - _t) * (480.0 / cap_settings.f_steps_mm_x);  // average over 3ms@160steps
   n = n < 2.0 ? 2.0: n; //minimum factor 2
- 
+
   _x = approximate(_x, x, n);
   _y = approximate(_y, y, n);
   _z = approximate(_z, z, n);
