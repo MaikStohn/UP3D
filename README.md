@@ -21,6 +21,7 @@ Usage: up3dtranscode machinetype input.gcode output.umc nozzleheight
 
 example: up3dtranscode mini input.gcode output.umc 123.1
 ```
+See list of supported G-Commands in wiki page [G-Command Overview](https://github.com/UP3D-gcode/UP3D/wiki/Supported-G-Code-Commands)
 ---
 
 ## up3dload: 
