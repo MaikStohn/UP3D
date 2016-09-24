@@ -1,8 +1,8 @@
-# UP3D [![License](http://img.shields.io/:license-gpl2-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-2.0.html) [![Build Status](https://travis-ci.org/UP3D-gcode/UP3D.svg?branch=master)](https://travis-ci.org/UP3D-gcode/UP3D) 
-[![Downloads](https://img.shields.io/github/downloads/UP3D-gcode/UP3D/total.svg?maxAge=3600)](https://github.com/UP3D-gcode/UP3D/releases/latest)
-UP 3D Printer Tools
+# UP3D [![License](http://img.shields.io/:license-gpl2-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-2.0.html)
+[![Build Status](https://travis-ci.org/UP3D-gcode/UP3D.svg?branch=master)](https://travis-ci.org/UP3D-gcode/UP3D) 
 
-Download: [![Release](https://img.shields.io/github/release/UP3D-gcode/UP3D.svg?maxAge=60)](https://github.com/UP3D-gcode/UP3D/releases/latest)
+
+# To download click [here](https://github.com/UP3D-gcode/UP3D/releases/latest) for the latest OS X, Linux or Windows package. 
 
 Instructions: [up3dtools-how-to](http://stohn.de/3d/index.php/2016/03/10/up3dtools-little-how-to)
 
