@@ -97,6 +97,18 @@ $CC -Os -Wall \
 $STRIP up3dgcode
 
 
+$CC -Os -Wall \
+    -framework IOKit \
+    -framework CoreFoundation \
+    `pkg-config --cflags libusb-1.0`/.. \
+    -I../UP3DCOMMON/ \
+    -lobjc \
+    `pkg-config --libs-only-L libusb-1.0|cut -c3-`/libusb-1.0.a \
+    -o up3dstatus ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upstatus.c
+
+$STRIP up3dstatus
+
+
 
 elif [[ "$OSTYPE" == "linux-gnu" ]]; then
 
