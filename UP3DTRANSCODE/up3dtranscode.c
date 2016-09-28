@@ -31,7 +31,7 @@
 void print_usage_and_exit()
 {
   printf("Usage: up3dtranscode machinetype input.gcode output.umc nozzleheight\n\n");
-  printf("          machinetype:  mini / classic / plus / box\n");
+  printf("          machinetype:  mini / classic / plus / box / Cetus\n");
   printf("          input.gcode:  g-code file from slic3r/cura/simplify\n");
   printf("          output.umc:   up machine code file which will be generated\n");
   printf("          nozzleheight: nozzle distance from bed (e.g. 123.45)\n\n");
@@ -40,6 +40,8 @@ void print_usage_and_exit()
 
 int main(int argc, char *argv[])
 {
+  bool power_off = true;
+  
   if( 5 != argc )
     print_usage_and_exit();
 
@@ -56,6 +58,11 @@ int main(int argc, char *argv[])
   
     case 'b': //box
       memcpy( &settings, &settings_box, sizeof(settings) );
+      break;
+      
+    case 'C': //cetus  
+      memcpy( &settings, &settings_cetus, sizeof(settings) );
+      power_off = false;
       break;
 
     default:
@@ -90,7 +97,7 @@ int main(int argc, char *argv[])
     if( !gcp_process_line(line) )
       return 0;
 
-  umcwriter_finish();
+  umcwriter_finish(power_off);
   int32_t print_time = umcwriter_get_print_time();
 
   fclose( fgcode );

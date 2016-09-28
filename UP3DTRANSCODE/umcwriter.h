@@ -23,7 +23,7 @@
 #include <stdbool.h>
 
 bool    umcwriter_init(const char* filename, const double heightZ, const char machine_type);
-void    umcwriter_finish();
+void    umcwriter_finish(bool power_off);
 int32_t umcwriter_get_print_time();
 void    umcwriter_home(int32_t axes);
 void    umcwriter_virtual_home(double speedX, double speedY,double speedZ);

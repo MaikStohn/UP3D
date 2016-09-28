@@ -24,8 +24,8 @@ Formulas:
 physics: s = v*t + a/2*t^2 
 
 --> P3*P1 + P6/2*P1*P1
---> s = ( P3*P1 + P6/2*P1*P1 )/512 = steps
-    s = ( P3*P1 + P6/2*P1*P1 )/512/854 = mm
+--> s = ( P3*P1 + P6/2*P1*(P1-1) )/512 = steps
+    s = ( P3*P1 + P6/2*P1*(P1-1) )/512/854 = mm
 
 
 known values from config: accel_a = accel_d
