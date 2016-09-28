@@ -1,9 +1,14 @@
 UP3DTOOLS/up3dinfo
 UP3DTOOLS/up3dshell
 UP3DTOOLS/up3dload
+UP3DTOOLS/up3dcapture
+UP3DTOOLS/up3dgcode
+UP3DTOOLS/up3dstatus
 UP3DTRANSCODE/up3dtranscode
 UP3DPARSE/convg
 UP3DPARSE/parse
 .DS_Store
 build
 UP3DTOOLS/capture
+up3d.xcworkspace
+xcode
