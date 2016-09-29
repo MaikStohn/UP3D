@@ -17,6 +17,7 @@
 #define VID (0x4745)
 #define PID_MINI_A (0x0001)
 #define PID_MINI_M (0x2777)
+#define PID_PLUS   (0x277d)
 #define PID_CETUS_S7 (0x277f)
 #define EP_OUT 1
 #define EP_IN  1
@@ -51,6 +52,9 @@ bool UP3DCOMM_Open()
   if( !_libusb_dev_handle )
     _libusb_dev_handle = libusb_open_device_with_vid_pid( _libusb_ctx, VID, PID_MINI_M );
   
+  if( !_libusb_dev_handle )
+    _libusb_dev_handle = libusb_open_device_with_vid_pid( _libusb_ctx, VID, PID_PLUS );
+
   if( !_libusb_dev_handle )
     _libusb_dev_handle = libusb_open_device_with_vid_pid( _libusb_ctx, VID, PID_CETUS_S7 );
 
