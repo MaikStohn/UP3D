@@ -30,11 +30,14 @@
 
 void print_usage_and_exit()
 {
-  printf("Usage: up3dtranscode machinetype input.gcode output.umc nozzleheight\n\n");
+  printf("Usage: up3dtranscode machinetype input.gcode output.umc nozzleheight [a_factor%%] [vmax_factor%%] [junction]\n\n");
   printf("          machinetype:  mini / classic / plus / box / Cetus\n");
   printf("          input.gcode:  g-code file from slic3r/cura/simplify\n");
   printf("          output.umc:   up machine code file which will be generated\n");
-  printf("          nozzleheight: nozzle distance from bed (e.g. 123.45)\n\n");
+  printf("          nozzleheight: nozzle distance from bed (e.g. 123.45)\n");
+  printf("          a_factor%%:    acceleration factor to defaults (.e.g. 0.5)\n");
+  printf("          vmax_factor%%: speed factor to max defaults (e.g. 1.5)\n");
+  printf("          junction:     junction deviation, default is 0.05 (e.g. 0.1)\n\n");
   exit(0);
 }
 
@@ -42,7 +45,7 @@ int main(int argc, char *argv[])
 {
   bool power_off = true;
   
-  if( 5 != argc )
+  if( 5 > argc ||  8 < argc )
     print_usage_and_exit();
 
   switch( argv[1][0] )
@@ -69,7 +72,49 @@ int main(int argc, char *argv[])
       printf("ERROR: Uknown machine type: %s\n\n",argv[1] );
       print_usage_and_exit();
   }
+  
+  if (6 <= argc)
+  {
+    double factor;
+    if( 1 != sscanf(argv[5],"%lf", &factor) )
+    {
+      printf("ERROR: Invalid a_factor: %s\n\n", argv[5]);
+      print_usage_and_exit();
+    }
+    factor /= 100;
+    settings.acceleration[0] *= factor;
+    settings.acceleration[1] *= factor;
+    settings.acceleration[2] *= factor;
+    //printf(";use a_factor %.5f\n", factor);
+  }
 
+  if (7 <= argc)
+  {
+    double factor;
+    if( 1 != sscanf(argv[6],"%lf", &factor) )
+    {
+      printf("ERROR: Invalid v_factor: %s\n\n", argv[6]);
+      print_usage_and_exit();
+    }
+    factor /= 100;
+    settings.max_rate[0] *= factor;
+    settings.max_rate[1] *= factor;
+    settings.max_rate[2] *= factor;
+    //printf(";use v_factor %.5f\n", factor);
+  }
+
+  if (8 <= argc)
+  {
+    double junction;
+    if( 1 != sscanf(argv[7],"%lf", &junction) )
+    {
+      printf("ERROR: Invalid junction: %s\n\n", argv[7]);
+      print_usage_and_exit();
+    }
+    settings.junction_deviation = junction;
+    //printf(";use junction %.5f\n", junction);
+  }
+  
   double nozzle_height;
   if( 1 != sscanf(argv[4],"%lf", &nozzle_height) )
   {
