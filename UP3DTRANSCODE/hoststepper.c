@@ -143,9 +143,9 @@ void _st_subtract_plsteps(segment_up3d_t* pseg)
     int32_t p8 = pseg->p8;
     
     //calculate xsteps generated like mcu in printer (THERE IS A BAD *FLOOR* ROUNDING INSIDE!)
-    int64_t sx = floor( (float)(p3*p1+p6*p1*p1/2) / 512.0 );
-    int64_t sy = floor( (float)(p4*p1+p7*p1*p1/2) / 512.0 );
-    int64_t sa = floor( (float)(p5*p1+p8*p1*p1/2) / 512.0 );
+    int64_t sx = floor( (float)(p3*p1+p6*(p1-1)*p1/2) / 512.0 );
+    int64_t sy = floor( (float)(p4*p1+p7*(p1-1)*p1/2) / 512.0 );
+    int64_t sa = floor( (float)(p5*p1+p8*(p1-1)*p1/2) / 512.0 );
     
     pl_block->steps[0] -= llabs(sx);
     pl_block->steps[1] -= llabs(sy);
@@ -177,9 +177,9 @@ void _st_create_up3d_seg_a(segment_up3d_t* pseg, double t, double v_entry, doubl
     int64_t p7 = (int64_t)(sa_y/(p1*p1));
     int64_t p8 = (int64_t)(sa_a/(p1*p1));
     
-    int64_t p3 = (int64_t)(s_x/p1) + (int64_t)((sa_x-p6*p1*p1)/2/p1);
-    int64_t p4 = (int64_t)(s_y/p1) + (int64_t)((sa_y-p7*p1*p1)/2/p1);
-    int64_t p5 = (int64_t)(s_a/p1) + (int64_t)((sa_a-p8*p1*p1)/2/p1);
+    int64_t p3 = (int64_t)(s_x/p1) + (int64_t)((sa_x-p6*(p1-1)*p1)/2/p1);
+    int64_t p4 = (int64_t)(s_y/p1) + (int64_t)((sa_y-p7*(p1-1)*p1)/2/p1);
+    int64_t p5 = (int64_t)(s_a/p1) + (int64_t)((sa_a-p8*(p1-1)*p1)/2/p1);
     
     //test format limits
     if( (p3<-32767) || (p3>32767) || (p4<-32767) || (p4>32767) || (p5<-32767) || (p5>32767) ||

@@ -8,6 +8,9 @@
 #include <stdlib.h>
 #include <math.h>
 
+#define cetus
+
+#ifndef cetus
 #define STEPS_X (854.0)
 #define STEPS_Y (854.0)
 #define STEPS_E (854.0)
@@ -15,6 +18,18 @@
 #define ADD_X   (0.0)
 #define ADD_Y   (120.0)
 #define ADD_Z   (123.1)
+
+#else // cetus
+
+#define STEPS_X (160.0)
+#define STEPS_Y (160.0)
+#define STEPS_E (236.0)
+
+#define ADD_X   (0.0)
+#define ADD_Y   (180.0)
+#define ADD_Z   (182.1)
+
+#endif
 
 typedef enum PCMD {
   PCMD_Stop         = 0x00000001,
@@ -134,9 +149,9 @@ void _dat_cmd_MoveF( float speed1, float pos1, float speed2, float pos2, bool is
 
 void _dat_cmd_MoveL( uint16_t p1, uint16_t p2, int16_t p3, int16_t p4, int16_t p5, int16_t p6, int16_t p7, int16_t p8 )
 {
-  int32_t sx = floor((float)((p3*p1+p6*p1*p1/2))/512);
-  int32_t sy = floor((float)((p4*p1+p7*p1*p1/2))/512);
-  int32_t sa = floor((float)((p5*p1+p8*p1*p1/2))/512);
+  int32_t sx = floor((float)((p3*p1+p6*(p1-1)*p1/2))/512);
+  int32_t sy = floor((float)((p4*p1+p7*(p1-1)*p1/2))/512);
+  int32_t sa = floor((float)((p5*p1+p8*(p1-1)*p1/2))/512);
   double r1 = sx/STEPS_X;
   double r2 = sy/STEPS_Y;
   double r3 = sa/STEPS_E;

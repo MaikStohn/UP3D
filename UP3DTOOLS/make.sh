@@ -75,6 +75,41 @@ $CC -Os -Wall \
 
 $STRIP up3dshell
 
+$CC -Os -Wall \
+    -framework IOKit \
+    -framework CoreFoundation \
+    `pkg-config --cflags libusb-1.0`/.. \
+    -I../UP3DCOMMON/ \
+    -lobjc \
+    -lncurses \
+    `pkg-config --libs-only-L libusb-1.0|cut -c3-`/libusb-1.0.a \
+    -o up3dcapture ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c capture.c
+
+$STRIP up3dcapture
+
+$CC -Os -Wall \
+    -framework IOKit \
+    -framework CoreFoundation \
+    -I../UP3DCOMMON/ \
+    -lobjc \
+    -o up3dgcode togcode.c
+
+$STRIP up3dgcode
+
+
+$CC -Os -Wall \
+    -framework IOKit \
+    -framework CoreFoundation \
+    `pkg-config --cflags libusb-1.0`/.. \
+    -I../UP3DCOMMON/ \
+    -lobjc \
+    `pkg-config --libs-only-L libusb-1.0|cut -c3-`/libusb-1.0.a \
+    -o up3dstatus ../UP3DCOMMON/up3dcomm.c ../UP3DCOMMON/up3d.c ../UP3DCOMMON/up3ddata.c upstatus.c
+
+$STRIP up3dstatus
+
+
+
 elif [[ "$OSTYPE" == "linux-gnu" ]]; then
 
 # note: LINUX: install libudev-dev libusb-1.0.0-dev + libncurses-dev and compile

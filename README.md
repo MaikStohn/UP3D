@@ -1,9 +1,15 @@
-# UP3D [![License](http://img.shields.io/:license-gpl2-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-2.0.html) [![Build Status](https://travis-ci.org/MaikStohn/UP3D.svg?branch=master)](https://travis-ci.org/MaikStohn/UP3D) [![Downloads](https://img.shields.io/github/downloads/MaikStohn/UP3D/total.svg?maxAge=3600)](https://github.com/MaikStohn/UP3D/releases/latest)
-UP 3D Printer Tools
+# UP3D - use your UP printer with standard G-Code Slicers 
+[![License](http://img.shields.io/:license-gpl2-blue.svg?style=flat-square)](http://www.gnu.org/licenses/gpl-2.0.html)
+[![Build Status](https://travis-ci.org/UP3D-gcode/UP3D.svg?branch=master)](https://travis-ci.org/UP3D-gcode/UP3D) 
 
-Download: [![Release](https://img.shields.io/github/release/MaikStohn/UP3D.svg?maxAge=60)](https://github.com/MaikStohn/UP3D/releases/latest)
+
+# To download click [![Downloads](https://img.shields.io/github/downloads/UP3D-gcode/UP3D/total.svg?maxAge=3600)](https://github.com/UP3D-gcode/UP3D/releases/latest) for the latest OS X, Linux or Windows package. 
 
 Instructions: [up3dtools-how-to](http://stohn.de/3d/index.php/2016/03/10/up3dtools-little-how-to)
+
+This tools support the famouse printers from Tiertime see http://www.up3d.com for more information. It allows you to use other advanced slicers together with your UP printer. This tools process and upload standard G-Code files to your UP printer.
+
+Currently the tools are all based on command line input, so no fancy GUI (yet).
 
 ---
 
@@ -20,6 +26,7 @@ Usage: up3dtranscode machinetype input.gcode output.umc nozzleheight
 
 example: up3dtranscode mini input.gcode output.umc 123.1
 ```
+### See list of supported G-Commands in wiki page [G-Command Overview](https://github.com/UP3D-gcode/UP3D/wiki/Supported-G-Code-Commands)
 ---
 
 ## up3dload: 
