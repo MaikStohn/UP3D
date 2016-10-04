@@ -17,6 +17,7 @@
 #define VID (0x4745)
 #define PID_MINI_A (0x0001)
 #define PID_MINI_M (0x2777)
+#define PID_UPPLUS (0x277D)
 #define EP_OUT 1
 #define EP_IN  1
 
@@ -49,11 +50,12 @@ bool UP3DCOMM_Open()
   _libusb_dev_handle = libusb_open_device_with_vid_pid( _libusb_ctx, VID, PID_MINI_A );
   if( !_libusb_dev_handle )
     _libusb_dev_handle = libusb_open_device_with_vid_pid( _libusb_ctx, VID, PID_MINI_M );
-  
-  
+  if( !_libusb_dev_handle )
+    _libusb_dev_handle = libusb_open_device_with_vid_pid( _libusb_ctx, VID, PID_UPPLUS );
+
   if( !_libusb_dev_handle )
   {
-    fprintf(stderr, "[ERROR] USB Open Device (%04X:%04X/%04X) not found\n", VID, PID_MINI_A, PID_MINI_M );
+    fprintf(stderr, "[ERROR] USB Open Device (%04X:%04X/%04X/%04X) not found\n", VID, PID_MINI_A, PID_MINI_M, PID_UPPLUS );
     UP3DCOMM_Close();
     return false;
   }
