@@ -64,6 +64,7 @@ extern settings_t settings;
 extern settings_t settings_mini;
 extern settings_t settings_classic_plus;
 extern settings_t settings_box;
+extern settings_t settings_cetus;
 
 // Minimum planner junction speed. Sets the default minimum junction speed the planner plans to at
 // every buffer block junction, except for starting from rest and end of the buffer, which are always
