@@ -214,7 +214,7 @@ static void planner_recalculate()
 
 void plan_reset() 
 {
-  memset(&pl, 0, sizeof(pl)); // Clear planner struct
+  memset(&pl, 0, sizeof(planner_t)); // Clear planner struct
   block_buffer_tail = 0;
   block_buffer_head = 0; // Empty = tail
   next_buffer_head = 1; // plan_next_block_index(block_buffer_head)
@@ -429,7 +429,17 @@ void plan_set_position(double *pos)
 {
   uint32_t idx;
   for (idx=0; idx<N_AXIS; idx++)
+  {
     pl.position[idx] = round(pos[idx]*settings.steps_per_mm[idx]);
+    pl.previous_unit_vec[idx] = 0;
+  }
+  pl.previous_nominal_speed_sqr = 0;
+}
+
+void plan_set_e_position(double epos)
+{
+  pl.position[A_AXIS] = round(epos*settings.steps_per_mm[A_AXIS]);
+  pl.previous_unit_vec[A_AXIS] = 0;
 }
 
 void plan_get_position(double *pos)

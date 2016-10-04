@@ -99,7 +99,8 @@ bool plan_check_full_buffer();
 
 //-->MS
 void plan_set_position(double *pos);
-void plan_get_position(double *pos); 
+void plan_set_e_position(double epos);
+void plan_get_position(double *pos);
 //<--MS
 
 #endif //hostplanner_h
