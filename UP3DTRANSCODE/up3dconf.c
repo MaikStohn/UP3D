@@ -55,3 +55,16 @@ settings_t settings_box = {
   .x_hspeed_lo = 10.0, .y_hspeed_lo = 10.0, .z_hspeed_lo =  3.0, .x_hofs_lo =  2.0, .y_hofs_lo =  2.0, .z_hofs_lo =  2.0,
   .heatbed_wait_factor = 30.0,
 };
+
+settings_t settings_cetus = { 
+  .steps_per_mm = { 160.0, 160.0, 236.0 },
+  .max_rate = { 200, 200, 50 },
+  .acceleration = { 1500, 1500, 1500 },
+  .junction_deviation = 0.1,
+  .x_axes =  1, .y_axes =  0,
+  .x_dir  =  1, .y_dir  = -1, .z_dir  = -1,
+  .x_hspeed_hi = 50.0, .y_hspeed_hi = 50.0, .z_hspeed_hi = 50.0, .x_hofs_hi =  4.0, .y_hofs_hi =  4.0, .z_hofs_hi =  6.0,
+  .x_hspeed_lo = 10.0, .y_hspeed_lo = 10.0, .z_hspeed_lo =  3.0, .x_hofs_lo =  9.0, .y_hofs_lo =  2.0, .z_hofs_lo =  2.0,
+  .heatbed_wait_factor = 20.0,
+};
+
