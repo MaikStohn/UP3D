@@ -299,12 +299,6 @@ void plan_buffer_line(double *target, double feed_rate, bool invert_feed_rate)
     block->millimeters += delta_mm*delta_mm;
   }
   block->millimeters = sqrt(block->millimeters); // Complete millimeters calculation with sqrt()
-
-  //-->MS
-  for (idx=0; idx<N_AXIS; idx++)
-    block->factor[idx] = block->steps[idx]/block->millimeters*((block->direction_bits&get_direction_pin_mask(idx))?-1:1);
-  //<--MS
-
   // Bail if this is a zero-length block. Highly unlikely to occur.
   if (block->step_event_count == 0) { return; } 
   
@@ -330,11 +324,16 @@ void plan_buffer_line(double *target, double feed_rate, bool invert_feed_rate)
       feed_rate = min(feed_rate,settings.max_rate[idx]*inverse_unit_vec_value);
       block->acceleration = min(block->acceleration,settings.acceleration[idx]*inverse_unit_vec_value);
 
-      // Incrementally compute cosine of angle between previous and current path. Cos(theta) of the junction
-      // between the current move and the previous move is simply the dot product of the two unit vectors, 
-      // where prev_unit_vec is negative. Used later to compute maximum junction speed.
-      junction_cos_theta -= pl.previous_unit_vec[idx] * unit_vec[idx];
+      if( A_AXIS != idx )
+      {
+        // Incrementally compute cosine of angle between previous and current path. Cos(theta) of the junction
+        // between the current move and the previous move is simply the dot product of the two unit vectors,
+        // where prev_unit_vec is negative. Used later to compute maximum junction speed.
+        junction_cos_theta -= pl.previous_unit_vec[idx] * unit_vec[idx];
+      }
     }
+    
+    block->factor[idx] = unit_vec[idx] * settings.steps_per_mm[idx];
   }
   
   // TODO: Need to check this method handling zero junction speeds when starting from rest.

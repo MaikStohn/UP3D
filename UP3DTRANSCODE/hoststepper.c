@@ -156,22 +156,23 @@ void _st_subtract_plsteps(segment_up3d_t* pseg)
 void _st_create_up3d_seg_a(segment_up3d_t* pseg, double t, double v_entry, double v_exit)
 {
   pseg->p1 = 0;
+
+  
+  //s linear speed
+  int64_t s_x = g_ex*512 + (int64_t)(v_entry*t*pl_block->factor[X_AXIS])*512;
+  int64_t s_y = g_ey*512 + (int64_t)(v_entry*t*pl_block->factor[Y_AXIS])*512;
+  int64_t s_a = g_ea*512 + (int64_t)(v_entry*t*pl_block->factor[A_AXIS])*512;
+  
+  //s acceleration
+  int64_t sa_x = (int64_t)((v_exit-v_entry)*t*pl_block->factor[X_AXIS])*512;
+  int64_t sa_y = (int64_t)((v_exit-v_entry)*t*pl_block->factor[Y_AXIS])*512;
+  int64_t sa_a = (int64_t)((v_exit-v_entry)*t*pl_block->factor[A_AXIS])*512;
   
   //==> tmax = 65535*65535 / 50000000 = 85.8 sec. per segment
   int64_t p1 = 1+(int64_t)(t*F_CPU)/65535;
   for(;p1<65536;p1++)
   {
     int64_t p2 = (int64_t)(t*F_CPU/p1);
-    
-    //s linear speed
-    int64_t s_x = (int64_t)(v_entry*t*pl_block->factor[X_AXIS])*512;
-    int64_t s_y = (int64_t)(v_entry*t*pl_block->factor[Y_AXIS])*512;
-    int64_t s_a = (int64_t)(v_entry*t*pl_block->factor[A_AXIS])*512;
-    
-    //s acceleration
-    int64_t sa_x = (int64_t)((v_exit-v_entry)*t*pl_block->factor[X_AXIS]/2) *2*512;
-    int64_t sa_y = (int64_t)((v_exit-v_entry)*t*pl_block->factor[Y_AXIS]/2) *2*512;
-    int64_t sa_a = (int64_t)((v_exit-v_entry)*t*pl_block->factor[A_AXIS]/2) *2*512;
     
     int64_t p6 = (int64_t)(sa_x/(p1*p1));
     int64_t p7 = (int64_t)(sa_y/(p1*p1));
@@ -220,7 +221,10 @@ void _st_create_up3d_seg_c(segment_up3d_t* pseg, double v)
   {
     int64_t p2 = (int64_t)(t*F_CPU/p1);
     
-    int64_t p3 = (int64_t)(s_x/p1); int64_t p4 = (int64_t)(s_y/p1); int64_t p5 = (int64_t)(s_a/p1);
+    int64_t p3 = (int64_t)(s_x/p1); if(pl_block->steps[0]<0) p3=0; //take care not to insert REVERSE steps
+    int64_t p4 = (int64_t)(s_y/p1); if(pl_block->steps[1]<0) p4=0; //take care not to insert REVERSE steps
+    int64_t p5 = (int64_t)(s_a/p1); if(pl_block->steps[2]<0) p5=0; //take care not to insert REVERSE steps
+    
     //test format limits
     if( (p3<-32767) || (p3>32767) || (p4<-32767) || (p4>32767) || (p5<-32767) || (p5>32767) )
       continue; //try again (p1 incremeted)
@@ -253,7 +257,7 @@ void _st_create_up3d_seg_c(segment_up3d_t* pseg, double v)
 void st_reset()
 {
   // Initialize stepper algorithm variables.
-  memset(&prep, 0, sizeof(prep));
+  memset(&prep, 0, sizeof(st_prep_t));
   pl_block = NULL;  // Planner block pointer used by segment buffer
   segment_buffer_tail = 0;
   segment_buffer_head = 0; // empty = tail
